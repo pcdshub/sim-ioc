@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+import caproto
 from caproto.server import PVGroup, SubGroup, get_pv_pair_wrapper, pvproperty
-from caproto.server.records import MotorFields
+from caproto.server.records import MotorFields, register_record
 
 
 async def broadcast_precision_to_fields(record):
@@ -173,3 +174,20 @@ class BeckhoffAxis(PVGroup):
     plc = SubGroup(BeckhoffAxisPLC, prefix=':PLC:')
     state = SubGroup(TwinCATStatePositioner, prefix=':STATE:')
     motor = SubGroup(Motor, velocity=2, prefix='')
+
+
+@register_record
+class XpsMotorFields(MotorFields):
+    _record_type = 'xps8p'
+
+    stop_pause_go = pvproperty(
+        name='SPG',
+        value='GO',
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=['STOP', 'PAUSE', 'GO'],
+        doc='PCDS stop-pause-go variant of SPMG',
+        read_only=False)
+
+
+class XpsMotor(Motor):
+    motor = pvproperty(value=0.0, name='', record='xps8p', precision=3)
