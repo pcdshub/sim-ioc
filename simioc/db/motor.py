@@ -191,3 +191,34 @@ class XpsMotorFields(MotorFields):
 
 class XpsMotor(Motor):
     motor = pvproperty(value=0.0, name='', record='xps8p', precision=3)
+
+
+class AerotechMotor(Motor):
+    axis_status = pvproperty(
+        name=":AXIS_STATUS",
+        read_only=True,
+        value=0,
+    )
+
+    axis_fault = pvproperty(
+        name=":AXIS_FAULT",
+        read_only=True,
+        value=0,
+    )
+    clear_error = pvproperty(
+        name=":CLEAR",
+        read_only=False,
+        value=0,
+        record='bo',
+    )
+    config = pvproperty(
+        name=":CONFIG",
+        read_only=False,
+        value=0,
+    )
+    zero_all_proc = pvproperty(
+        name=":ZERO_P",
+        record='bo',
+        read_only=False,
+        value=0,
+    )

@@ -1,6 +1,6 @@
 from caproto.server import PVGroup, SubGroup
 
-from ..db.motor import Motor, XpsMotor
+from ..db.motor import AerotechMotor, Motor, XpsMotor
 from .utils import main
 
 
@@ -24,6 +24,12 @@ class MotorIOC(PVGroup):
                           prefix='xps:mtr2')
     xps_motor3 = SubGroup(XpsMotor, velocity=3., precision=2,
                           prefix='xps:mtr3')
+    aero_motor1 = SubGroup(AerotechMotor, velocity=3., precision=2,
+                           prefix='aero:mtr1')
+    aero_motor2 = SubGroup(AerotechMotor, velocity=3., precision=2,
+                           prefix='aero:mtr2')
+    aero_motor3 = SubGroup(AerotechMotor, velocity=3., precision=2,
+                           prefix='aero:mtr3')
 
 
 if __name__ == '__main__':
