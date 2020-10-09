@@ -191,3 +191,98 @@ class XpsMotorFields(MotorFields):
 
 class XpsMotor(Motor):
     motor = pvproperty(value=0.0, name='', record='xps8p', precision=3)
+
+
+class AerotechMotor(Motor):
+    """
+    Aerotech motor record + additional records.
+
+    Pairs with :class:`hxrsnd.aerotech.AeroBase`.
+
+    May not be entirely accurate with respect to record types.
+    """
+
+    axis_status = pvproperty(
+        name=":AXIS_STATUS",
+        read_only=True,
+        value=0,
+    )
+
+    axis_fault = pvproperty(
+        name=":AXIS_FAULT",
+        read_only=True,
+        value=0,
+    )
+    clear_error = pvproperty(
+        name=":CLEAR",
+        read_only=False,
+        value=0,
+        record='bo',
+    )
+    config = pvproperty(
+        name=":CONFIG",
+        read_only=False,
+        value=0,
+    )
+    zero_all_proc = pvproperty(
+        name=":ZERO_P",
+        record='bo',
+        read_only=False,
+        value=0,
+    )
+
+
+class AttocubeMotor(PVGroup):
+    """
+    Not a motor record. Pairs with :class:`hxrsnd.attocube.EccBase`.
+
+    May not be entirely accurate with respect to record types.
+    """
+    # position
+    user_readback = pvproperty(value=0.0, read_only=True, name=":POSITION")
+    user_setpoint = pvproperty(value=0.0, name=":CMD:TARGET", record='ai')
+
+    # limits
+    # upper_ctrl_limit = pvproperty(name=':CMD:TARGET.HOPR')
+    # lower_ctrl_limit = pvproperty(name=':CMD:TARGET.LOPR')
+
+    # configuration
+    motor_egu = pvproperty(value='mm', read_only=True, name=":UNIT")
+    motor_amplitude = pvproperty(value=0.0, name=":CMD:AMPL")
+    motor_dc = pvproperty(value=0.0, name=":CMD:DC")
+    motor_frequency = pvproperty(value=0.0, name=":CMD:FREQ")
+
+    # motor status
+    motor_connected = pvproperty(value=True, read_only=True,
+                                 name=":ST_CONNECT")
+    motor_enabled = pvproperty(value=True, read_only=True, name=":ST_ENABLED")
+    motor_referenced = pvproperty(value=True, read_only=True,
+                                  name=":ST_REFVAL")
+    motor_error = pvproperty(value=False, read_only=True, name=":ST_ERROR")
+    motor_is_moving = pvproperty(value=False, read_only=True,
+                                 name=":RD_MOVING")
+    motor_done_move = pvproperty(value=False, read_only=True,
+                                 name=":RD_INRANGE")
+    high_limit_switch = pvproperty(value=False, name=":ST_EOT_FWD")
+    low_limit_switch = pvproperty(value=False, name=":ST_EOT_BWD")
+    motor_reference_position = pvproperty(value=0.0, read_only=True,
+                                          name=":REF_POSITION")
+
+    # commands
+    motor_stop = pvproperty(value=0, name=":CMD:STOP")
+    motor_reset = pvproperty(value=0, name=":CMD:RESET.PROC")
+    motor_enable = pvproperty(value=True, name=":CMD:ENABLE")
+
+    @user_setpoint.startup
+    async def user_setpoint(self, instance, async_lib):
+        """
+        Startup hook for user_setpoint.
+        """
+        await self.user_setpoint.field_inst.low_operating_range.write(
+            value=-10)
+        await self.user_setpoint.field_inst.high_operating_range.write(
+            value=10)
+
+    @user_setpoint.putter
+    async def user_setpoint(self, instance, value):
+        await self.user_readback.write(value=value)
