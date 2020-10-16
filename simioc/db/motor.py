@@ -193,6 +193,42 @@ class XpsMotor(Motor):
     motor = pvproperty(value=0.0, name='', record='xps8p', precision=3)
 
 
+@register_record
+class ImsMotorFields(MotorFields):
+    _record_type = 'ims'
+
+    stop_pause_go = pvproperty(
+        name='SPG',
+        value='GO',
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=['STOP', 'PAUSE', 'GO'],
+        doc='PCDS stop-pause-go variant of SPMG',
+        read_only=False
+    )
+
+    # Custom IMS bit fields
+    reinit_command = pvproperty(
+        name='RINI',
+        value=0,
+        doc='Reinitialize command',
+        read_only=False,
+    )
+
+    # Custom IMS bit fields
+    part_number = pvproperty(
+        name='PN',
+        value='',
+        doc='Part number',
+        read_only=True,
+        report_as_string=True,
+    )
+
+
+class ImsMotor(Motor):
+    motor = pvproperty(value=0.0, name='', record='ims', precision=3)
+    seq_seln = pvproperty(value=0, name=':SEQ_SELN', record='longout')
+
+
 class AerotechMotor(Motor):
     """
     Aerotech motor record + additional records.
