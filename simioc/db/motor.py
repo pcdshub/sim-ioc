@@ -192,6 +192,9 @@ class XpsMotorFields(MotorFields):
 class XpsMotor(Motor):
     motor = pvproperty(value=0.0, name='', record='xps8p', precision=3)
 
+    # TODO: caproto bug
+    motor.startup(Motor.motor.pvspec.startup)
+
 
 @register_record
 class ImsMotorFields(MotorFields):
@@ -227,6 +230,9 @@ class ImsMotorFields(MotorFields):
 class ImsMotor(Motor):
     motor = pvproperty(value=0.0, name='', record='ims', precision=3)
     seq_seln = pvproperty(value=0, name=':SEQ_SELN', record='longout')
+
+    # TODO: caproto bug
+    motor.startup(Motor.motor.pvspec.startup)
 
 
 class AerotechMotor(Motor):

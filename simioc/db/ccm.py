@@ -30,8 +30,8 @@ class CCMCalcGroup(PVGroup):
 
 class CCMXGroup(PVGroup):
     # pseudo = SubGroup(PseudoSingleInterfaceGroup, prefix='None')
-    down = SubGroup(ImsMotor, prefix='{{x_down_prefix}}')
-    up = SubGroup(ImsMotor, prefix='{{x_up_prefix}}')
+    down = SubGroup(ImsMotor, prefix='{{x_down_prefix}}', velocity=10)
+    up = SubGroup(ImsMotor, prefix='{{x_up_prefix}}', velocity=10)
 
 
 class CCMYGroup(PVGroup):
