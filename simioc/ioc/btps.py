@@ -39,58 +39,62 @@ class BtpsPrototypeSimulator(PVGroup):
     PVs
     ---
     Motor - Linear
-    LAS:BTS:MCS2:01:m1 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m4 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m7 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m1 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m4 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m7 (ioc-las-bts-mcs1)
 
     Motor - Rotary
-    LAS:BTS:MCS2:01:m2 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m6 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m8 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m2 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m6 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m8 (ioc-las-bts-mcs1)
 
     Motor - Goniometer
-    LAS:BTS:MCS2:01:m3 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m5 (ioc-las-bts-mcs1)
-    LAS:BTS:MCS2:01:m9 (ioc-las-bts-mcs1)
-
-    Source Gate Valve
-    LTLHN:LS1:VGC:01  (plc-las-bts)
-    LTLHN:LS5:VGC:01  (plc-las-bts)
-    LTLHN:LS8:VGC:01  (plc-las-bts)
-
-    LSS Shutter Request
-    LTLHN:LS1:LST:REQ (ioc-las-lhn-bhc-05)
-    LTLHN:LS5:LST:REQ (ioc-las-lhn-bhc-05)
-    LTLHN:LS8:LST:REQ (ioc-las-lhn-bhc-05)
-
-    LSS Shutter State - Open
-    LTLHN:LS1:LST:OPN (ioc-las-lhn-bhc-05)
-    LTLHN:LS5:LST:OPN (ioc-las-lhn-bhc-05)
-    LTLHN:LS8:LST:OPN (ioc-las-lhn-bhc-05)
-
-    LSS Shutter State - Closed
-    LTLHN:LS1:LST:CLS (ioc-las-lhn-bhc-05)
-    LTLHN:LS5:LST:CLS (ioc-las-lhn-bhc-05)
-    LTLHN:LS8:LST:CLS (ioc-las-lhn-bhc-05)
+        LAS:BTS:MCS2:01:m3 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m5 (ioc-las-bts-mcs1)
+        LAS:BTS:MCS2:01:m9 (ioc-las-bts-mcs1)
 
     NF Camera
-    LAS:LHN:BAY1:CAM:01 (ioc-lhn-bay1-nf-01)
-    LAS:LHN:BAY3:CAM:01 (?, assumed)
-    LAS:LHN:BAY4:CAM:01 (ioc-lhn-bay4-nf-01)
+        LAS:LHN:BAY1:CAM:01 (ioc-lhn-bay1-nf-01)
+        LAS:LHN:BAY3:CAM:01 (?, assumed)
+        LAS:LHN:BAY4:CAM:01 (ioc-lhn-bay4-nf-01)
 
     FF Camera
-    LAS:LHN:BAY1:CAM:02 (ioc-lhn-bay1-ff-01)
-    LAS:LHN:BAY3:CAM:02 (?, assumed)
-    LAS:LHN:BAY4:CAM:02 (ioc-lhn-bay4-ff-01)
+        LAS:LHN:BAY1:CAM:02 (ioc-lhn-bay1-ff-01)
+        LAS:LHN:BAY3:CAM:02 (?, assumed)
+        LAS:LHN:BAY4:CAM:02 (ioc-lhn-bay4-ff-01)
+
+    The following are sourced from plc-las-bts:
+
+    Source Gate Valve
+        LTLHN:LS1:VGC:01 (ioc-las-bts)
+        LTLHN:LS5:VGC:01 (ioc-las-bts)
+        LTLHN:LS8:VGC:01 (ioc-las-bts)
 
     Destination Gate Valve PV
-    LTLHN:LD8:VGC:01 (ioc-las-bts) - TMO - IP1
-    LTLHN:LD10:VGC:01 (ioc-las-bts) - TMO - IP2
-    LTLHN:LD2:VGC:01 (ioc-las-bts) - TMO - IP3
-    LTLHN:LD6:VGC:01 (ioc-las-bts) - RIX - qRIXS
-    LTLH:LD4:VGC:01 (ioc-las-bts) - RIX - ChemRIXS
-    LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
-    LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
+        LTLHN:LD8:VGC:01 (ioc-las-bts) - TMO - IP1
+        LTLHN:LD10:VGC:01 (ioc-las-bts) - TMO - IP2
+        LTLHN:LD2:VGC:01 (ioc-las-bts) - TMO - IP3
+        LTLHN:LD6:VGC:01 (ioc-las-bts) - RIX - qRIXS
+        LTLHN:LD4:VGC:01 (ioc-las-bts) - RIX - ChemRIXS
+        LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
+        LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
+
+    The following *will be* sourced from plc-las-bts:
+
+    LSS Shutter Request
+        LTLHN:LS1:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS5:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS8:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+
+    LSS Shutter State - Open
+        LTLHN:LS1:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS5:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS8:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+
+    LSS Shutter State - Closed
+        LTLHN:LS1:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS5:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
+        LTLHN:LS8:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
     """
 
     # Linear motors (ioc-las-bts-mcs1)
@@ -103,7 +107,7 @@ class BtpsPrototypeSimulator(PVGroup):
     m6 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m6", user_limits=(-95, 95))
     m8 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m8", user_limits=(-300, 300))
 
-    # Rotary motors
+    # Goniometers
     m3 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m3", user_limits=(0, 0))
     m5 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m5", user_limits=(0, 0))
     m9 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m9", user_limits=(0, 0))
