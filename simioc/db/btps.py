@@ -80,7 +80,10 @@ class BtpsMotorsAndCameras(PVGroup):
     m1 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m1", user_limits=(0, 0))
     m4 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m4", user_limits=(0, 2000))
     m7 = SubGroup(
-        Motor, prefix="LAS:BTS:MCS2:01:m7", position=405.0, user_limits=(400, 1446.53)
+        Motor,
+        prefix="LAS:BTS:MCS2:01:m7",
+        position=405.0,
+        user_limits=(400, 1446.53),
     )
 
     # Rotary motors
@@ -117,11 +120,17 @@ class RangeComparison(PVGroup):
 
     # Configuration settings:
     low = pvproperty_from_pytmc(
-        name="Low", io="io", doc="Configurable lower bound for the value range",
+        name="Low",
+        io="io",
+        doc="Configurable lower bound for the value range",
     )
-    nominal = pvproperty_from_pytmc(name="Nominal", io="io", doc="The nominal value",)
+    nominal = pvproperty_from_pytmc(
+        name="Nominal", io="io", doc="The nominal value",
+    )
     high = pvproperty_from_pytmc(
-        name="High", io="io", doc="Configurable upper bound for the value range",
+        name="High",
+        io="io",
+        doc="Configurable upper bound for the value range",
     )
     inclusive = pvproperty_from_pytmc(
         name="Inclusive",
@@ -133,26 +142,42 @@ class RangeComparison(PVGroup):
 class CentroidConfig(PVGroup):
     """BTPS camera centroid range comparison."""
 
-    centroid_x = SubGroup(RangeComparison, prefix="CenterX:", doc="Centroid X range")
-    centroid_y = SubGroup(RangeComparison, prefix="CenterY:", doc="Centroid Y range")
+    centroid_x = SubGroup(
+        RangeComparison, prefix="CenterX:", doc="Centroid X range"
+    )
+    centroid_y = SubGroup(
+        RangeComparison, prefix="CenterY:", doc="Centroid Y range"
+    )
 
 
 class SourceConfig(PVGroup):
     """BTPS per-(source, destination) configuration settings and state."""
 
     name_ = pvproperty_from_pytmc(
-        name="Name", io="input", doc="Source name", value="name", max_length=255,
+        name="Name",
+        io="input",
+        doc="Source name",
+        value="name",
+        max_length=255,
     )
     far_field = SubGroup(CentroidConfig, prefix="FF", doc="Far field centroid")
-    near_field = SubGroup(CentroidConfig, prefix="NF", doc="Near field centroid")
-    goniometer = SubGroup(RangeComparison, prefix="Goniometer:", doc="Goniometer stage")
+    near_field = SubGroup(
+        CentroidConfig, prefix="NF", doc="Near field centroid"
+    )
+    goniometer = SubGroup(
+        RangeComparison, prefix="Goniometer:", doc="Goniometer stage"
+    )
     linear = SubGroup(RangeComparison, prefix="Linear:", doc="Linear stage")
     rotary = SubGroup(RangeComparison, prefix="Rotary:", doc="Rotary stage")
     entry_valve_ready = pvproperty_from_pytmc(
-        name="EntryValveReady", io="input", doc="Entry valve is open and ready",
+        name="EntryValveReady",
+        io="input",
+        doc="Entry valve is open and ready",
     )
 
-    checks_ok = pvproperty_from_pytmc(name="ChecksOK", io="input", doc="Check summary")
+    checks_ok = pvproperty_from_pytmc(
+        name="ChecksOK", io="input", doc="Check summary"
+    )
     data_valid = pvproperty_from_pytmc(
         name="Valid", io="input", doc="Data validity summary"
     )
@@ -162,14 +187,26 @@ class DestinationConfig(PVGroup):
     """BTPS per-destination configuration settings and state."""
 
     name_ = pvproperty_from_pytmc(
-        name="Name", io="input", doc="Destination name", value="name", max_length=255,
+        name="Name",
+        io="input",
+        doc="Destination name",
+        value="name",
+        max_length=255,
     )
-    source1 = SubGroup(SourceConfig, prefix="SRC:01:", doc="Settings for source 1")
-    source3 = SubGroup(SourceConfig, prefix="SRC:03:", doc="Settings for source 3")
-    source4 = SubGroup(SourceConfig, prefix="SRC:04:", doc="Settings for source 4")
+    source1 = SubGroup(
+        SourceConfig, prefix="SRC:01:", doc="Settings for source 1"
+    )
+    source3 = SubGroup(
+        SourceConfig, prefix="SRC:03:", doc="Settings for source 3"
+    )
+    source4 = SubGroup(
+        SourceConfig, prefix="SRC:04:", doc="Settings for source 4"
+    )
     # exit_valve = SubGroup(VGC, prefix="DestValve", doc="Exit valve for the destination")
     exit_valve_ready = pvproperty_from_pytmc(
-        name="ExitValveReady", io="input", doc="Exit valve is open and ready",
+        name="ExitValveReady",
+        io="input",
+        doc="Exit valve is open and ready",
     )
 
 
@@ -207,7 +244,9 @@ class ShutterSafety(PVGroup):
     )
 
     acknowledge = pvproperty_from_pytmc(
-        name="Acknowledge", io="io", doc="User acknowledgement of latched fault",
+        name="Acknowledge",
+        io="io",
+        doc="User acknowledgement of latched fault",
     )
 
     override = pvproperty_from_pytmc(
@@ -215,7 +254,9 @@ class ShutterSafety(PVGroup):
     )
 
     lss_open_request = pvproperty_from_pytmc(
-        name="LSS:OpenRequest", io="input", doc="Output request to LSS open shutter",
+        name="LSS:OpenRequest",
+        io="input",
+        doc="Output request to LSS open shutter",
     )
 
     safe_to_open = pvproperty_from_pytmc(
@@ -228,11 +269,19 @@ class BtpsState(PVGroup):
     Beam Transport Protection System (BTPS) State
     """
 
-    config = SubGroup(GlobalConfig, prefix="Config:", doc="Global configuration")
+    config = SubGroup(
+        GlobalConfig, prefix="Config:", doc="Global configuration"
+    )
 
-    shutter1 = SubGroup(ShutterSafety, prefix="Shutter:01:", doc="Source Shutter 1")
-    shutter3 = SubGroup(ShutterSafety, prefix="Shutter:03:", doc="Source Shutter 3")
-    shutter4 = SubGroup(ShutterSafety, prefix="Shutter:04:", doc="Source Shutter 4")
+    shutter1 = SubGroup(
+        ShutterSafety, prefix="Shutter:01:", doc="Source Shutter 1"
+    )
+    shutter3 = SubGroup(
+        ShutterSafety, prefix="Shutter:03:", doc="Source Shutter 3"
+    )
+    shutter4 = SubGroup(
+        ShutterSafety, prefix="Shutter:04:", doc="Source Shutter 4"
+    )
 
     dest1 = SubGroup(DestinationConfig, prefix="DEST:01:", doc="Destination 1")
     dest2 = SubGroup(DestinationConfig, prefix="DEST:02:", doc="Destination 2")
