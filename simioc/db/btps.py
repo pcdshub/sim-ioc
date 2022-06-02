@@ -2,15 +2,17 @@
 BTPS Simulator "database" PVGroups for reuse.
 """
 
+from __future__ import annotations
+
 from typing import List
 
 import caproto
 from caproto import ChannelType
 from caproto.server import PVGroup, SubGroup, pvproperty
 
-from ..db.areadetector import StatsPlugin
-from ..db.motor import Motor
-from ..db.utils import pvproperty_from_pytmc
+from .areadetector import StatsPlugin
+from .motor import Motor
+from .utils import pvproperty_with_rbv, write_if_differs
 
 
 class BtpsMotorsAndCameras(PVGroup):
@@ -112,52 +114,60 @@ class BtpsMotorsAndCameras(PVGroup):
 class RangeComparison(PVGroup):
     """BTPS single value range comparison check."""
 
-    value = pvproperty_from_pytmc(
-        name="Value",
-        io="input",
+    value = pvproperty(
+        name="Value_RBV",
         value=0.0,
         doc="Current value from the control system",
     )
-    in_range = pvproperty_from_pytmc(
-        name="InRange",
-        io="input",
+    in_range = pvproperty(
+        name="InRange_RBV",
         doc="Is the value currently in range?",
         dtype=ChannelType.ENUM,
         enum_strings=["Out of range", "In range"],
     )
-    input_valid = pvproperty_from_pytmc(
-        name="Valid",
-        io="input",
+    input_valid = pvproperty(
+        name="Valid_RBV",
         doc="Is the value considered valid?",
         dtype=ChannelType.ENUM,
         enum_strings=["Data Invalid", "Data Valid"],
     )
 
     # Configuration settings:
-    low = pvproperty_from_pytmc(
+    low = pvproperty_with_rbv(
         name="Low",
         value=0.0,
-        io="io",
         doc="Configurable lower bound for the value range",
     )
-    nominal = pvproperty_from_pytmc(
+    nominal = pvproperty_with_rbv(
         name="Nominal",
         value=0.0,
-        io="io",
         doc="The nominal value",
     )
-    high = pvproperty_from_pytmc(
+    high = pvproperty_with_rbv(
         name="High",
         value=0.0,
-        io="io",
         doc="Configurable upper bound for the value range",
     )
-    inclusive = pvproperty_from_pytmc(
+    inclusive = pvproperty_with_rbv(
         name="Inclusive",
         value=0.0,
-        io="io",
         doc="Is the value comparison exclusive or inclusive?",
     )
+
+    async def simulate(self, data_valid: bool = True):
+        """Simulate and update state."""
+        await write_if_differs(self.input_valid, int(data_valid))
+
+        low = self.low.readback.value
+        high = self.high.readback.value
+        if not self.input_valid.value or high < low:
+            in_range = False
+        elif self.inclusive.value:
+            in_range = low <= self.value.value <= high
+        else:
+            in_range = low < self.value.value < high
+
+        await write_if_differs(self.in_range, in_range)
 
 
 class CentroidConfig(PVGroup):
@@ -169,9 +179,8 @@ class CentroidConfig(PVGroup):
 class SourceConfig(PVGroup):
     """BTPS per-(source, destination) configuration settings and state."""
 
-    name_ = pvproperty_from_pytmc(
-        name="Name",
-        io="input",
+    name_ = pvproperty(
+        name="Name_RBV",
         doc="Source name",
         value="name",
         max_length=255,
@@ -181,36 +190,35 @@ class SourceConfig(PVGroup):
     goniometer = SubGroup(RangeComparison, prefix="Goniometer:", doc="Goniometer stage")
     linear = SubGroup(RangeComparison, prefix="Linear:", doc="Linear stage")
     rotary = SubGroup(RangeComparison, prefix="Rotary:", doc="Rotary stage")
-    entry_valve_ready = pvproperty_from_pytmc(
-        name="EntryValveReady",
-        io="input",
+    entry_valve_ready = pvproperty(
+        name="EntryValveReady_RBV",
         doc="Entry valve is open and ready",
         dtype=ChannelType.ENUM,
         enum_strings=["Not ready", "Ready"],
     )
 
-    checks_ok = pvproperty_from_pytmc(
-        name="ChecksOK",
-        io="input",
+    checks_ok = pvproperty(
+        name="ChecksOK_RBV",
         doc="Check summary",
         dtype=ChannelType.ENUM,
         enum_strings=["Failed", "Passed"],
     )
-    data_valid = pvproperty_from_pytmc(
-        name="Valid",
-        io="input",
+    data_valid = pvproperty(
+        name="Valid_RBV",
         doc="Data validity summary",
         dtype=ChannelType.ENUM,
         enum_strings=["Data Invalid", "Data Valid"],
     )
 
+    async def simulate(self, state: BtpsState, destination: DestinationConfig):
+        """Simulate and update state."""
+
 
 class DestinationConfig(PVGroup):
     """BTPS per-destination configuration settings and state."""
 
-    name_ = pvproperty_from_pytmc(
-        name="Name",
-        io="input",
+    name_ = pvproperty(
+        name="Name_RBV",
         doc="Destination name",
         value="name",
         max_length=255,
@@ -219,24 +227,33 @@ class DestinationConfig(PVGroup):
     source3 = SubGroup(SourceConfig, prefix="SRC:03:", doc="Settings for source 3")
     source4 = SubGroup(SourceConfig, prefix="SRC:04:", doc="Settings for source 4")
     # exit_valve = SubGroup(VGC, prefix="DestValve", doc="Exit valve for the destination")
-    exit_valve_ready = pvproperty_from_pytmc(
-        name="ExitValveReady",
-        io="input",
+    exit_valve_ready = pvproperty(
+        name="ExitValveReady_RBV",
         doc="Exit valve is open and ready",
         dtype=ChannelType.ENUM,
         enum_strings=["Not ready", "Ready"],
     )
 
-    async def simulate(self):
+    @property
+    def sources(self) -> List[SourceConfig]:
+        """Destination configurations."""
+        return [
+            self.source1,
+            self.source3,
+            self.source4,
+        ]
+
+    async def simulate(self, state: BtpsState):
         """Simulate and update state."""
+        for source in self.sources:
+            await source.simulate(state, self)
 
 
 class GlobalConfig(PVGroup):
     """BTPS global configuration settings."""
 
-    max_frame_time = pvproperty_from_pytmc(
+    max_frame_time = pvproperty_with_rbv(
         name="MaxFrameTime",
-        io="io",
         value=0.0,
         doc=(
             "Maximum time between frame updates in seconds to be considered "
@@ -244,9 +261,8 @@ class GlobalConfig(PVGroup):
         ),
     )
 
-    min_centroid_change = pvproperty_from_pytmc(
+    min_centroid_change = pvproperty_with_rbv(
         name="MinPixelChange",
-        io="io",
         value=0.0,
         doc=(
             "Minimal change (in pixels) for camera image sum to be "
@@ -258,55 +274,49 @@ class GlobalConfig(PVGroup):
 class ShutterSafety(PVGroup):
     """BTPS per-source shutter safety status."""
 
-    open_request = pvproperty_from_pytmc(
+    open_request = pvproperty_with_rbv(
         name="UserOpen",
-        io="io",
         doc="User request to open/close shutter",
         dtype=ChannelType.ENUM,
         enum_strings=["Close", "Open"],
     )
 
-    latched_error = pvproperty_from_pytmc(
-        name="Error",
-        io="input",
+    latched_error = pvproperty(
+        name="Error_RBV",
         doc="Latched error",
         dtype=ChannelType.ENUM,
         enum_strings=["No error", "Error"],
     )
 
-    acknowledge = pvproperty_from_pytmc(
+    acknowledge = pvproperty_with_rbv(
         name="Acknowledge",
-        io="io",
         doc="User acknowledgement of latched fault",
         dtype=ChannelType.ENUM,
         enum_strings=["FALSE", "TRUE"],
     )
 
-    override = pvproperty_from_pytmc(
+    override = pvproperty_with_rbv(
         name="Override",
-        io="io",
         doc="BTPS advanced override mode",
         dtype=ChannelType.ENUM,
         enum_strings=["Normal mode", "Override mode"],
     )
 
-    lss_open_request = pvproperty_from_pytmc(
-        name="LSS:OpenRequest",
-        io="input",
+    lss_open_request = pvproperty(
+        name="LSS:OpenRequest_RBV",
         doc="Output request to LSS open shutter",
         dtype=ChannelType.ENUM,
         enum_strings=["Request close", "Request open"],
     )
 
-    safe_to_open = pvproperty_from_pytmc(
-        name="Safe",
-        io="input",
+    safe_to_open = pvproperty(
+        name="Safe_RBV",
         doc="BTPS safe to open indicator",
         dtype=ChannelType.ENUM,
         enum_strings=["Unsafe", "Safe"],
     )
 
-    async def simulate(self):
+    async def simulate(self, state: BtpsState):
         """Simulate and update state."""
 
 
@@ -341,10 +351,10 @@ class BtpsState(PVGroup):
             return
 
         for shutter in self.shutters:
-            await shutter.simulate()
+            await shutter.simulate(self)
 
         for dest in self.destinations:
-            await dest.simulate()
+            await dest.simulate(self)
 
     @property
     def shutters(self) -> List[ShutterSafety]:
@@ -353,7 +363,7 @@ class BtpsState(PVGroup):
 
     @property
     def destinations(self) -> List[DestinationConfig]:
-        """Source shutters."""
+        """Destination configurations."""
         return [
             self.dest1,
             self.dest2,
