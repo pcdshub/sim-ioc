@@ -162,7 +162,7 @@ class RangeComparison(PVGroup):
         high = self.high.readback.value
         if not self.input_valid.value or high < low:
             in_range = False
-        elif self.inclusive.value:
+        elif self.inclusive.readback.value:
             in_range = low <= self.value.value <= high
         else:
             in_range = low < self.value.value < high
@@ -243,7 +243,7 @@ class DestinationConfig(PVGroup):
             self.source4,
         ]
 
-    async def simulate(self, state: BtpsState):
+    async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
         """Simulate and update state."""
         for source in self.sources:
             await source.simulate(state, self)
@@ -251,6 +251,12 @@ class DestinationConfig(PVGroup):
 
 class GlobalConfig(PVGroup):
     """BTPS global configuration settings."""
+
+    system_override = pvproperty_with_rbv(
+        name="SystemOverride",
+        value=0.0,
+        doc="System override for when BTPS gets in the way",
+    )
 
     max_frame_time = pvproperty_with_rbv(
         name="MaxFrameTime",
@@ -261,7 +267,7 @@ class GlobalConfig(PVGroup):
         ),
     )
 
-    min_centroid_change = pvproperty_with_rbv(
+    min_pixel_sum_change = pvproperty_with_rbv(
         name="MinPixelChange",
         value=0.0,
         doc=(
@@ -316,8 +322,34 @@ class ShutterSafety(PVGroup):
         enum_strings=["Unsafe", "Safe"],
     )
 
-    async def simulate(self, state: BtpsState):
+    async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
         """Simulate and update state."""
+
+
+class BtpsCameraStatus(PVGroup):
+    """pytmc-linked checks of camera state in the PLC."""
+    frame_time = pvproperty(
+        name="FrameTime_RBV",
+        doc="Frame time as calculated by the PLC",
+    )
+
+    is_updating = pvproperty(
+        name="IsUpdating_RBV",
+        doc="Frame time as calculated by the PLC",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
+
+
+class BtpsAllCameraStatus(PVGroup):
+    """pytmc-linked checks of camera state in the PLC."""
+
+    nf1 = SubGroup(BtpsCameraStatus, prefix="NF1:")
+    nf3 = SubGroup(BtpsCameraStatus, prefix="NF3:")
+    nf4 = SubGroup(BtpsCameraStatus, prefix="NF4:")
+    ff1 = SubGroup(BtpsCameraStatus, prefix="FF1:")
+    ff3 = SubGroup(BtpsCameraStatus, prefix="FF3:")
+    ff4 = SubGroup(BtpsCameraStatus, prefix="FF4:")
 
 
 class BtpsState(PVGroup):
@@ -339,9 +371,10 @@ class BtpsState(PVGroup):
     dest6 = SubGroup(DestinationConfig, prefix="DEST:06:", doc="Destination 6")
     dest7 = SubGroup(DestinationConfig, prefix="DEST:07:", doc="Destination 7")
 
-    sim_enable = pvproperty(value=1, name="SimEnable")
+    sim_enable = pvproperty(value=1, name="SimEnable", record="bo")
+    camera_times = SubGroup(BtpsAllCameraStatus, prefix="Chk:")
 
-    @sim_enable.scan(period=1)
+    @sim_enable.scan(period=1, use_scan_field=True)
     async def sim_enable(
         self,
         instance: caproto.ChannelInteger,
@@ -350,11 +383,22 @@ class BtpsState(PVGroup):
         if self.sim_enable.value == 0:
             return
 
+        if self.parent is None:
+            return
+
+        try:
+            motors: BtpsMotorsAndCameras = self.parent.motors
+        except AttributeError:
+            raise RuntimeError(
+                "To enable simulations, include a BtpsMotorsAndCameras SubGroup "
+                "in the IOC named 'motors'."
+            ) from None
+
         for shutter in self.shutters:
-            await shutter.simulate(self)
+            await shutter.simulate(self, motors)
 
         for dest in self.destinations:
-            await dest.simulate(self)
+            await dest.simulate(self, motors)
 
     @property
     def shutters(self) -> List[ShutterSafety]:
