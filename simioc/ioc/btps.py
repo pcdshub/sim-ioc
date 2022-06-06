@@ -2,7 +2,8 @@
 BTPS Simulator IOC for unit and integration tests.
 """
 
-from caproto.server import PVGroup, SubGroup
+from caproto import ChannelData
+from caproto.server import AsyncLibraryLayer, PVGroup, SubGroup, pvproperty
 
 from ..db.btps import BtpsMotorsAndCameras, BtpsState
 from .utils import main
@@ -17,6 +18,11 @@ class BtpsSimulator(PVGroup):
 
     motors = SubGroup(BtpsMotorsAndCameras, prefix="")
     state = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
+    load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
+
+    @load_config.startup
+    async def load_config(self, instance: ChannelData, async_lib: AsyncLibraryLayer):
+        ...
 
 
 if __name__ == "__main__":

@@ -210,7 +210,12 @@ class SourceConfig(PVGroup):
         enum_strings=["Data Invalid", "Data Valid"],
     )
 
-    async def simulate(self, state: BtpsState, destination: DestinationConfig):
+    async def simulate(
+        self,
+        state: BtpsState,
+        motors: BtpsMotorsAndCameras,
+        destination: DestinationConfig,
+    ):
         """Simulate and update state."""
 
 
@@ -246,7 +251,7 @@ class DestinationConfig(PVGroup):
     async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
         """Simulate and update state."""
         for source in self.sources:
-            await source.simulate(state, self)
+            await source.simulate(state, motors, self)
 
 
 class GlobalConfig(PVGroup):
