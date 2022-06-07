@@ -4,7 +4,7 @@ BTPS Simulator "database" PVGroups for reuse.
 
 from __future__ import annotations
 
-from typing import List
+from typing import Dict, cast
 
 import caproto
 from caproto import ChannelType
@@ -118,6 +118,7 @@ class RangeComparison(PVGroup):
         name="Value_RBV",
         value=0.0,
         doc="Current value from the control system",
+        precision=3,
     )
     in_range = pvproperty(
         name="InRange_RBV",
@@ -137,22 +138,31 @@ class RangeComparison(PVGroup):
         name="Low",
         value=0.0,
         doc="Configurable lower bound for the value range",
+        precision=3,
     )
     nominal = pvproperty_with_rbv(
         name="Nominal",
         value=0.0,
         doc="The nominal value",
+        precision=3,
     )
     high = pvproperty_with_rbv(
         name="High",
         value=0.0,
         doc="Configurable upper bound for the value range",
+        precision=3,
     )
     inclusive = pvproperty_with_rbv(
         name="Inclusive",
         value=0.0,
         doc="Is the value comparison exclusive or inclusive?",
     )
+
+    async def set_nominal(self, value: float, atol: float = 0.1):
+        """Set the nominal value to ``value`` with tolerance ``atol``."""
+        await self.nominal.readback.write(value)
+        await self.low.readback.write(value - atol)
+        await self.high.readback.write(value + atol)
 
     async def simulate(self, data_valid: bool = True):
         """Simulate and update state."""
@@ -174,6 +184,11 @@ class CentroidConfig(PVGroup):
     """BTPS camera centroid range comparison."""
     centroid_x = SubGroup(RangeComparison, prefix="CenterX:", doc="Centroid X range")
     centroid_y = SubGroup(RangeComparison, prefix="CenterY:", doc="Centroid Y range")
+
+    async def simulate(self, data_valid: bool = True):
+        for check in [self.centroid_x, self.centroid_y]:
+            check = cast(RangeComparison, check)
+            await check.simulate()
 
 
 class SourceConfig(PVGroup):
@@ -217,6 +232,13 @@ class SourceConfig(PVGroup):
         destination: DestinationConfig,
     ):
         """Simulate and update state."""
+        for check in [self.linear, self.rotary, self.goniometer]:
+            check = cast(RangeComparison, check)
+            await check.simulate()
+
+        for centroid in [self.near_field, self.far_field]:
+            check = cast(CentroidConfig, check)
+            await check.simulate()
 
 
 class DestinationConfig(PVGroup):
@@ -240,17 +262,17 @@ class DestinationConfig(PVGroup):
     )
 
     @property
-    def sources(self) -> List[SourceConfig]:
+    def sources(self) -> Dict[int, SourceConfig]:
         """Destination configurations."""
-        return [
-            self.source1,
-            self.source3,
-            self.source4,
-        ]
+        return {
+            1: self.source1,
+            3: self.source3,
+            4: self.source4,
+        }
 
     async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
         """Simulate and update state."""
-        for source in self.sources:
+        for source in self.sources.values():
             await source.simulate(state, motors, self)
 
 
@@ -399,26 +421,26 @@ class BtpsState(PVGroup):
                 "in the IOC named 'motors'."
             ) from None
 
-        for shutter in self.shutters:
+        for shutter in self.shutters.values():
             await shutter.simulate(self, motors)
 
-        for dest in self.destinations:
+        for dest in self.destinations.values():
             await dest.simulate(self, motors)
 
     @property
-    def shutters(self) -> List[ShutterSafety]:
+    def shutters(self) -> Dict[int, ShutterSafety]:
         """Source shutters."""
-        return [self.shutter1, self.shutter3, self.shutter4]
+        return {1: self.shutter1, 3: self.shutter3, 4: self.shutter4}
 
     @property
-    def destinations(self) -> List[DestinationConfig]:
+    def destinations(self) -> Dict[int, DestinationConfig]:
         """Destination configurations."""
-        return [
-            self.dest1,
-            self.dest2,
-            self.dest3,
-            self.dest4,
-            self.dest5,
-            self.dest6,
-            self.dest7,
-        ]
+        return {
+            1: self.dest1,
+            2: self.dest2,
+            3: self.dest3,
+            4: self.dest4,
+            5: self.dest5,
+            6: self.dest6,
+            7: self.dest7,
+        }
