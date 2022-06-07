@@ -83,9 +83,9 @@ class BtpsMotorsAndCameras(PVGroup):
     """
 
     # Linear motors (ioc-las-bts-mcs1)
-    m1 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m1", user_limits=(0, 0))
-    m4 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m4", user_limits=(0, 2000))
-    m7 = SubGroup(
+    m1: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m1", user_limits=(0, 0))
+    m4: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m4", user_limits=(0, 2000))
+    m7: Motor = SubGroup(
         Motor,
         prefix="LAS:BTS:MCS2:01:m7",
         position=405.0,
@@ -93,22 +93,22 @@ class BtpsMotorsAndCameras(PVGroup):
     )
 
     # Rotary motors
-    m2 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m2", user_limits=(0, 0))
-    m6 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m6", user_limits=(-95, 95))
-    m8 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m8", user_limits=(-300, 300))
+    m2: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m2", user_limits=(0, 0))
+    m6: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m6", user_limits=(-95, 95))
+    m8: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m8", user_limits=(-300, 300))
 
     # Goniometers
-    m3 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m3", user_limits=(0, 0))
-    m5 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m5", user_limits=(0, 0))
-    m9 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m9", user_limits=(0, 0))
+    m3: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m3", user_limits=(0, 0))
+    m5: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m5", user_limits=(0, 0))
+    m9: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m9", user_limits=(0, 0))
 
-    nf_cam_bay1 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:01:Stats2:")
-    nf_cam_bay3 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:01:Stats2:")
-    nf_cam_bay4 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:01:Stats2:")
+    nf1: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:01:Stats2:")
+    nf3: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:01:Stats2:")
+    nf4: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:01:Stats2:")
 
-    ff_cam_bay1 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:02:Stats2:")
-    ff_cam_bay3 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:02:Stats2:")
-    ff_cam_bay4 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:02:Stats2:")
+    ff1: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:02:Stats2:")
+    ff3: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:02:Stats2:")
+    ff4: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:02:Stats2:")
 
 
 class RangeComparison(PVGroup):
@@ -182,12 +182,19 @@ class RangeComparison(PVGroup):
 
 class CentroidConfig(PVGroup):
     """BTPS camera centroid range comparison."""
-    centroid_x = SubGroup(RangeComparison, prefix="CenterX:", doc="Centroid X range")
-    centroid_y = SubGroup(RangeComparison, prefix="CenterY:", doc="Centroid Y range")
+    centroid_x: RangeComparison = SubGroup(
+        RangeComparison,
+        prefix="CenterX:",
+        doc="Centroid X range",
+    )
+    centroid_y: RangeComparison = SubGroup(
+        RangeComparison,
+        prefix="CenterY:",
+        doc="Centroid Y range",
+    )
 
     async def simulate(self, data_valid: bool = True):
         for check in [self.centroid_x, self.centroid_y]:
-            check = cast(RangeComparison, check)
             await check.simulate()
 
 
@@ -200,11 +207,21 @@ class SourceConfig(PVGroup):
         value="name",
         max_length=255,
     )
-    far_field = SubGroup(CentroidConfig, prefix="FF", doc="Far field centroid")
-    near_field = SubGroup(CentroidConfig, prefix="NF", doc="Near field centroid")
-    goniometer = SubGroup(RangeComparison, prefix="Goniometer:", doc="Goniometer stage")
-    linear = SubGroup(RangeComparison, prefix="Linear:", doc="Linear stage")
-    rotary = SubGroup(RangeComparison, prefix="Rotary:", doc="Rotary stage")
+    far_field: CentroidConfig = SubGroup(
+        CentroidConfig, prefix="FF", doc="Far field centroid"
+    )
+    near_field: CentroidConfig = SubGroup(
+        CentroidConfig, prefix="NF", doc="Near field centroid"
+    )
+    goniometer: RangeComparison = SubGroup(
+        RangeComparison, prefix="Goniometer:", doc="Goniometer stage"
+    )
+    linear: RangeComparison = SubGroup(
+        RangeComparison, prefix="Linear:", doc="Linear stage"
+    )
+    rotary: RangeComparison = SubGroup(
+        RangeComparison, prefix="Rotary:", doc="Rotary stage"
+    )
     entry_valve_ready = pvproperty(
         name="EntryValveReady_RBV",
         doc="Entry valve is open and ready",
@@ -237,8 +254,8 @@ class SourceConfig(PVGroup):
             await check.simulate()
 
         for centroid in [self.near_field, self.far_field]:
-            check = cast(CentroidConfig, check)
-            await check.simulate()
+            centroid = cast(CentroidConfig, centroid)
+            await centroid.simulate()
 
 
 class DestinationConfig(PVGroup):
@@ -250,9 +267,21 @@ class DestinationConfig(PVGroup):
         value="name",
         max_length=255,
     )
-    source1 = SubGroup(SourceConfig, prefix="SRC:01:", doc="Settings for source 1")
-    source3 = SubGroup(SourceConfig, prefix="SRC:03:", doc="Settings for source 3")
-    source4 = SubGroup(SourceConfig, prefix="SRC:04:", doc="Settings for source 4")
+    source1: SourceConfig = SubGroup(
+        SourceConfig,
+        prefix="SRC:01:",
+        doc="Settings for source 1"
+    )
+    source3: SourceConfig = SubGroup(
+        SourceConfig,
+        prefix="SRC:03:",
+        doc="Settings for source 3"
+    )
+    source4: SourceConfig = SubGroup(
+        SourceConfig,
+        prefix="SRC:04:",
+        doc="Settings for source 4"
+    )
     # exit_valve = SubGroup(VGC, prefix="DestValve", doc="Exit valve for the destination")
     exit_valve_ready = pvproperty(
         name="ExitValveReady_RBV",
@@ -386,20 +415,60 @@ class BtpsState(PVGroup):
 
     config = SubGroup(GlobalConfig, prefix="Config:", doc="Global configuration")
 
-    shutter1 = SubGroup(ShutterSafety, prefix="Shutter:01:", doc="Source Shutter 1")
-    shutter3 = SubGroup(ShutterSafety, prefix="Shutter:03:", doc="Source Shutter 3")
-    shutter4 = SubGroup(ShutterSafety, prefix="Shutter:04:", doc="Source Shutter 4")
+    shutter1: ShutterSafety = SubGroup(
+        ShutterSafety,
+        prefix="Shutter:01:",
+        doc="Source Shutter 1",
+    )
+    shutter3: ShutterSafety = SubGroup(
+        ShutterSafety,
+        prefix="Shutter:03:",
+        doc="Source Shutter 3",
+    )
+    shutter4: ShutterSafety = SubGroup(
+        ShutterSafety,
+        prefix="Shutter:04:",
+        doc="Source Shutter 4",
+    )
 
-    dest1 = SubGroup(DestinationConfig, prefix="DEST:01:", doc="Destination 1")
-    dest2 = SubGroup(DestinationConfig, prefix="DEST:02:", doc="Destination 2")
-    dest3 = SubGroup(DestinationConfig, prefix="DEST:03:", doc="Destination 3")
-    dest4 = SubGroup(DestinationConfig, prefix="DEST:04:", doc="Destination 4")
-    dest5 = SubGroup(DestinationConfig, prefix="DEST:05:", doc="Destination 5")
-    dest6 = SubGroup(DestinationConfig, prefix="DEST:06:", doc="Destination 6")
-    dest7 = SubGroup(DestinationConfig, prefix="DEST:07:", doc="Destination 7")
+    dest1: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:01:",
+        doc="Destination 1",
+    )
+    dest2: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:02:",
+        doc="Destination 2",
+    )
+    dest3: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:03:",
+        doc="Destination 3",
+    )
+    dest4: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:04:",
+        doc="Destination 4",
+    )
+    dest5: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:05:",
+        doc="Destination 5",
+    )
+    dest6: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:06:",
+        doc="Destination 6",
+    )
+    dest7: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="DEST:07:",
+        doc="Destination 7",
+    )
 
     sim_enable = pvproperty(value=1, name="SimEnable", record="bo")
-    camera_times = SubGroup(BtpsAllCameraStatus, prefix="Chk:")
+    camera_times: BtpsAllCameraStatus = SubGroup(BtpsAllCameraStatus, prefix="Chk:")
 
     @sim_enable.scan(period=1, use_scan_field=True)
     async def sim_enable(

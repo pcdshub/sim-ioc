@@ -103,16 +103,15 @@ class BtpsSimulator(PVGroup):
     Listed PVs do not include the default "SIM:" prefix.
     """
 
-    motors = SubGroup(BtpsMotorsAndCameras, prefix="")
-    state = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
+    motors: BtpsMotorsAndCameras = SubGroup(BtpsMotorsAndCameras, prefix="")
+    state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
     load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
 
     @load_config.startup
     async def load_config(self, instance: ChannelData, async_lib: AsyncLibraryLayer):
         print("Loading sample config...")
-        state = cast(BtpsState, self.state)
         for conf in sample_config:
-            dest = state.destinations[conf.destination]
+            dest = self.state.destinations[conf.destination]
             source = dest.sources[conf.source]
 
             for range_, nominal in [
