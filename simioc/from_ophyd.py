@@ -280,9 +280,10 @@ def convert_from_ophyd(import_name: str, database_name: str):
     print("# Automatically converted from: ")
     print(f"# Module: {import_name}")
     print(f"# Database: {database_name}")
-    print("from caproto import ChannelType")
     print()
+    print("from caproto import ChannelType")
     print("from caproto.server import PVGroup, SubGroup, pvproperty")
+    print()
     print("from .utils import pvproperty_with_rbv")
 
     module = importlib.import_module(import_name)
