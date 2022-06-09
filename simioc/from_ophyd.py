@@ -37,6 +37,33 @@ def convert_signal(
     value: Optional[Any] = 0,
     **kwargs,
 ) -> str:
+    """
+    Take an ophyd component and an instantiated signal and return caproto
+    PVGroup-compatible pvproperty code.
+
+    Parameters
+    ----------
+    cpt : ophyd.Component
+        The ophyd component for the attribute.
+
+    attr : str
+        The attribute name to use.
+
+    pvname : str
+        The PV name.
+
+    setpoint_pvname : str, optional
+        An optional setpoint PV name.
+
+    signal : EpicsSignal
+        The instantiated signal
+
+    value : any, optional
+        The initial value.
+
+    **kwargs :
+        Keyword arguments for the pvproperty.
+    """
     cls = "pvproperty"
     if setpoint_pvname:
         if f"{setpoint_pvname}_RBV" == pvname:
@@ -60,6 +87,21 @@ def convert_signal(
 def find_record_by_suffix(
     db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]
 ) -> Optional[whatrecord.db.RecordInstance]:
+    """
+    Get the most-likely matching record from a provided Database.
+
+    Parameters
+    ----------
+    db : Database
+        The whatrecord database.
+
+    suffix : str
+        The PV suffix.
+
+    all_pvnames : str
+        Other PV suffixes that may be used to determine the most likely
+        record.
+    """
     by_prefix = {}
     for pv in all_pvnames:
         for name, instance in db.records.items():
@@ -77,6 +119,21 @@ def find_record_by_suffix(
 
 
 def info_from_db(db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]):
+    """
+    Get pvproperty instantiation information from a whatrecord database.
+
+    Parameters
+    ----------
+    db : Database
+        The whatrecord database.
+
+    suffix : str
+        The PV suffix.
+
+    all_pvnames : str
+        Other PV suffixes that may be used to determine the most likely
+        record.
+    """
     record = find_record_by_suffix(db, suffix, all_pvnames)
     if not record:
         return dict(value=0)
@@ -131,6 +188,17 @@ def info_from_db(db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]
 
 
 def convert_class(db: whatrecord.db.Database, cls: Type[ophyd.Device]):
+    """
+    Convert an ophyd class to a caproto PVGroup given an EPICS database.
+
+    Parameters
+    ----------
+    db : Database
+        The parsed whatrecord database.
+
+    cls : ophyd.Device class
+        The ophyd device class to convert.
+    """
     try:
         inst = cls(prefix="{{prefix}}", name="")
     except Exception as ex:
@@ -197,8 +265,23 @@ def convert_class(db: whatrecord.db.Database, cls: Type[ophyd.Device]):
 
 
 def convert_from_ophyd(import_name: str, database_name: str):
-    print("from caproto import ChannelType")
+    """
+    Takes a Python module name with ophyd Devices, import it, and converts the
+    found Devices to caproto PVGroups.
 
+    Parameters
+    ----------
+    import_name : str
+        The module name.
+
+    database_name : str
+        Path to an EPICS database file.
+    """
+    print("# Automatically converted from: ")
+    print(f"# Module: {import_name}")
+    print(f"# Database: {database_name}")
+    print("from caproto import ChannelType")
+    print()
     print("from caproto.server import PVGroup, SubGroup, pvproperty")
     print("from .utils import pvproperty_with_rbv")
 
@@ -211,7 +294,7 @@ def convert_from_ophyd(import_name: str, database_name: str):
 
     seen = set()
     to_check = list(
-        obj for attr, obj in inspect.getmembers(module) if inspect.isclass(obj)
+        obj for _, obj in inspect.getmembers(module) if inspect.isclass(obj)
     )
     classes = []
 
