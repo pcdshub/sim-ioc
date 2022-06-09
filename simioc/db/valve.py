@@ -241,36 +241,6 @@ class ValveBase(PVGroup):
 
 
 class VVC(ValveBase, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
     override_status = pvproperty(
         name=":OVRD_ON_RBV",
         value=0,
@@ -289,51 +259,6 @@ class VVC(ValveBase, PVGroup):
 
 
 class VRC(VVC, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
-    override_status = pvproperty(
-        name=":OVRD_ON_RBV",
-        value=0,
-        doc="Epics Readback on Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-        read_only=True,
-    )
-    override_force_open = pvproperty_with_rbv(
-        name=":FORCE_OPN",
-        value=0,
-        doc="Epics Command to force open the valve inoverride mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "FORCE OPEN"],
-    )
     state = pvproperty(
         name=":STATE_RBV",
         value=0,
@@ -372,86 +297,6 @@ class VRC(VVC, PVGroup):
 
 
 class VGC(VRC, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
-    override_status = pvproperty(
-        name=":OVRD_ON_RBV",
-        value=0,
-        doc="Epics Readback on Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-        read_only=True,
-    )
-    override_force_open = pvproperty_with_rbv(
-        name=":FORCE_OPN",
-        value=0,
-        doc="Epics Command to force open the valve inoverride mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "FORCE OPEN"],
-    )
-    state = pvproperty(
-        name=":STATE_RBV",
-        value=0,
-        doc="Valve state",
-        dtype=ChannelType.ENUM,
-        enum_strings=[
-            "Vented",
-            "At Vacuum",
-            "Differential Pressure",
-            "Lost Vacuum",
-            "Ext Fault",
-            "AT Vacuum",
-            "Triggered",
-            "Vacuum Fault",
-            "Close Timeout",
-            "Open Timeout",
-        ],
-        read_only=True,
-    )
-    open_limit = pvproperty(
-        name=":OPN_DI_RBV",
-        value=0,
-        doc="Open limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "OPEN"],
-        read_only=True,
-    )
-    closed_limit = pvproperty(
-        name=":CLS_DI_RBV",
-        value=0,
-        doc="Closed limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "CLOSE"],
-        read_only=True,
-    )
     diff_press_ok = pvproperty(
         name=":DP_OK_RBV",
         value=0,
@@ -515,36 +360,6 @@ class VGC(VRC, PVGroup):
 
 
 class VGCLegacy(ValveBase, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
     open_limit = pvproperty(
         name=":OPN_DI_RBV",
         value=0,
@@ -564,86 +379,6 @@ class VGCLegacy(ValveBase, PVGroup):
 
 
 class VGC_2S(VRC, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
-    override_status = pvproperty(
-        name=":OVRD_ON_RBV",
-        value=0,
-        doc="Epics Readback on Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-        read_only=True,
-    )
-    override_force_open = pvproperty_with_rbv(
-        name=":FORCE_OPN",
-        value=0,
-        doc="Epics Command to force open the valve inoverride mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "FORCE OPEN"],
-    )
-    state = pvproperty(
-        name=":STATE_RBV",
-        value=0,
-        doc="Valve state",
-        dtype=ChannelType.ENUM,
-        enum_strings=[
-            "Vented",
-            "At Vacuum",
-            "Differential Pressure",
-            "Lost Vacuum",
-            "Ext Fault",
-            "AT Vacuum",
-            "Triggered",
-            "Vacuum Fault",
-            "Close Timeout",
-            "Open Timeout",
-        ],
-        read_only=True,
-    )
-    open_limit = pvproperty(
-        name=":OPN_DI_RBV",
-        value=0,
-        doc="Open limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "OPEN"],
-        read_only=True,
-    )
-    closed_limit = pvproperty(
-        name=":CLS_DI_RBV",
-        value=0,
-        doc="Closed limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "CLOSE"],
-        read_only=True,
-    )
     diff_press_ok = pvproperty(
         name=":DP_OK_RBV",
         value=0,
@@ -723,51 +458,6 @@ class VGC_2S(VRC, PVGroup):
 
 
 class VRCClsLS(VVC, PVGroup):
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
-    override_status = pvproperty(
-        name=":OVRD_ON_RBV",
-        value=0,
-        doc="Epics Readback on Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-        read_only=True,
-    )
-    override_force_open = pvproperty_with_rbv(
-        name=":FORCE_OPN",
-        value=0,
-        doc="Epics Command to force open the valve inoverride mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "FORCE OPEN"],
-    )
     state = pvproperty(
         name=":STATE_RBV",
         value=0,
@@ -826,31 +516,6 @@ class VVCNO(PVGroup):
 
 
 class VRCNO(VVCNO, PVGroup):
-    close_command = pvproperty_with_rbv(
-        name=":CLS_SW",
-        value=0,
-        doc="Epics command to close valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "CLOSE"],
-    )
-    close_override = pvproperty_with_rbv(
-        name=":FORCE_CLS",
-        value=0,
-        doc="Epics Command for open the valve in override mode",
-    )
-    override_on = pvproperty_with_rbv(
-        name=":OVRD_ON",
-        value=0,
-        doc="Epics Command to set/reset Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-    )
-    close_ok = pvproperty(
-        name=":CLS_OK_RBV", value=0, doc="used for normally open valves", read_only=True
-    )
-    close_do = pvproperty(
-        name=":CLS_DO_RBV", value=0, doc="PLC Output to close valve", read_only=True
-    )
     state = pvproperty(
         name=":STATE_RBV",
         value=0,
@@ -896,108 +561,4 @@ class VRCNO(VVCNO, PVGroup):
 
 
 class VRCDA(VRC, VRCNO, PVGroup):
-    close_command = pvproperty_with_rbv(
-        name=":CLS_SW",
-        value=0,
-        doc="Epics command to close valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "CLOSE"],
-    )
-    close_override = pvproperty_with_rbv(
-        name=":FORCE_CLS",
-        value=0,
-        doc="Epics Command for open the valve in override mode",
-    )
-    override_on = pvproperty_with_rbv(
-        name=":OVRD_ON",
-        value=0,
-        doc="Epics Command to set/reset Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-    )
-    close_ok = pvproperty(
-        name=":CLS_OK_RBV", value=0, doc="used for normally open valves", read_only=True
-    )
-    close_do = pvproperty(
-        name=":CLS_DO_RBV", value=0, doc="PLC Output to close valve", read_only=True
-    )
-    state = pvproperty(
-        name=":STATE_RBV",
-        value=0,
-        doc="Valve state",
-        dtype=ChannelType.ENUM,
-        enum_strings=[
-            "Vented",
-            "At Vacuum",
-            "Differential Pressure",
-            "Lost Vacuum",
-            "Ext Fault",
-            "AT Vacuum",
-            "Triggered",
-            "Vacuum Fault",
-            "Close Timeout",
-            "Open Timeout",
-        ],
-        read_only=True,
-    )
-    error_reset = pvproperty_with_rbv(
-        name=":ALM_RST",
-        value=0,
-        doc="Reset Error state to valid by toggling this",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-    )
-    open_limit = pvproperty(
-        name=":OPN_DI_RBV",
-        value=0,
-        doc="Open limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "OPEN"],
-        read_only=True,
-    )
-    closed_limit = pvproperty(
-        name=":CLS_DI_RBV",
-        value=0,
-        doc="Closed limit switch digital input",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "CLOSE"],
-        read_only=True,
-    )
-    open_command = pvproperty_with_rbv(
-        name=":OPN_SW",
-        value=0,
-        doc="Epics command to Open valve",
-        dtype=ChannelType.ENUM,
-        enum_strings=["CLOSE", "OPEN"],
-    )
-    interlock_ok = pvproperty(
-        name=":OPN_OK_RBV",
-        value=0,
-        doc="Valve is OK to Open interlock ",
-        dtype=ChannelType.ENUM,
-        enum_strings=["OPN ILK NOT OK", "OPN ILK OK"],
-        read_only=True,
-    )
-    open_do = pvproperty(
-        name=":OPN_DO_RBV",
-        value=0,
-        doc="PLC Output to Open valve, 1 means 24V on command cable",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "TRUE"],
-        read_only=True,
-    )
-    override_status = pvproperty(
-        name=":OVRD_ON_RBV",
-        value=0,
-        doc="Epics Readback on Override mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["Override OFF", "Override ON"],
-        read_only=True,
-    )
-    override_force_open = pvproperty_with_rbv(
-        name=":FORCE_OPN",
-        value=0,
-        doc="Epics Command to force open the valve inoverride mode",
-        dtype=ChannelType.ENUM,
-        enum_strings=["FALSE", "FORCE OPEN"],
-    )
+    ...
