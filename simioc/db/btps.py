@@ -64,22 +64,6 @@ class BtpsMotorsAndCameras(PVGroup):
         LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
         LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
 
-    The following *will be* sourced from plc-las-bts:
-
-    LSS Shutter Request
-        LTLHN:LS1:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-
-    LSS Shutter State - Open
-        LTLHN:LS1:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-
-    LSS Shutter State - Closed
-        LTLHN:LS1:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
     """
 
     # Linear motors (ioc-las-bts-mcs1)
@@ -406,6 +390,67 @@ class BtpsAllCameraStatus(PVGroup):
     ff1 = SubGroup(BtpsCameraStatus, prefix="FF1:")
     ff3 = SubGroup(BtpsCameraStatus, prefix="FF3:")
     ff4 = SubGroup(BtpsCameraStatus, prefix="FF4:")
+
+
+class LssShutter(PVGroup):
+    """Beam transport system shutter interface via ioc-las-bts."""
+    request = pvproperty_with_rbv(
+        name="REQ",
+        value=0,
+        doc="User request to open",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
+    opened = pvproperty(
+        name="OPN_RBV",
+        value=0,
+        doc="Open status",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
+    closed = pvproperty(
+        name="CLS_RBV",
+        value=0,
+        doc="Closed status",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
+    permission = pvproperty(
+        name="LSS_RBV",
+        value=0,
+        doc="LSS Permission status",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
+
+
+class LssShutters(PVGroup):
+    """
+    Shutter readback status and request status.
+
+    LSS Shutter Request
+        LTLHN:LS1:LST:REQ_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:REQ_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:REQ_RBV (ioc-las-bts)
+
+    LSS Shutter State - Open
+        LTLHN:LS1:LST:OPN_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:OPN_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:OPN_RBV (ioc-las-bts)
+
+    LSS Shutter State - Closed
+        LTLHN:LS1:LST:CLS_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:CLS_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:CLS_RBV (ioc-las-bts)
+
+    LSS Permission
+        LTLHN:LS1:LST:LSS_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:LSS_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:LSS_RBV (ioc-las-bts)
+    """
+    source1 = SubGroup(LssShutter, prefix="LTLHN:LS1:LST:")
+    source3 = SubGroup(LssShutter, prefix="LTLHN:LS5:LST:")
+    source4 = SubGroup(LssShutter, prefix="LTLHN:LS8:LST:")
 
 
 class BtpsState(PVGroup):

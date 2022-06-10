@@ -8,7 +8,8 @@ from typing import cast
 from caproto import ChannelData
 from caproto.server import AsyncLibraryLayer, PVGroup, SubGroup, pvproperty
 
-from ..db.btps import BtpsMotorsAndCameras, BtpsState, RangeComparison
+from ..db.btps import (BtpsMotorsAndCameras, BtpsState, LssShutters,
+                       RangeComparison)
 from .utils import main
 
 
@@ -21,14 +22,6 @@ class SourceDestinationConfiguration:
     rotary: float
     goniometer: float
 
-
-# GVL_BTPS.fbDestinations[1](sName:='TMO IP1', fbDestinationValve:=GVL_BTS_VAC.fb_LD8_VGC);
-# GVL_BTPS.fbDestinations[2](sName:='TMO IP2', fbDestinationValve:=GVL_BTS_VAC.fb_LD10_VGC);
-# GVL_BTPS.fbDestinations[3](sName:='TMO IP3', fbDestinationValve:=GVL_BTS_VAC.fb_LD2_VGC);
-# GVL_BTPS.fbDestinations[4](sName:='RIX qRIXS', fbDestinationValve:=GVL_BTS_VAC.fb_LD6_VGC);
-# GVL_BTPS.fbDestinations[5](sName:='RIX ChemRIXS', fbDestinationValve:=GVL_BTS_VAC.fb_LD4_VGC);
-# GVL_BTPS.fbDestinations[6](sName:='XPP', fbDestinationValve:=GVL_BTS_VAC.fb_LD14_VGC);
-# GVL_BTPS.fbDestinations[7](sName:='Laser Lab', fbDestinationValve:=GVL_BTS_VAC.fb_LD9_VGC);
 
 sample_config = sum(
     (
@@ -105,6 +98,7 @@ class BtpsSimulator(PVGroup):
 
     motors: BtpsMotorsAndCameras = SubGroup(BtpsMotorsAndCameras, prefix="")
     state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
+    shutters: LssShutters = SubGroup(LssShutters, prefix="")
     load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
 
     @load_config.startup
