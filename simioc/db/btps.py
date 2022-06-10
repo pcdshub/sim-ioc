@@ -395,7 +395,8 @@ class BtpsAllCameraStatus(PVGroup):
 class LssShutter(PVGroup):
     """Beam transport system shutter interface via ioc-las-bts."""
 
-    async def _put_request(self, instance, value: int):
+    async def _put_request(self, instance, value: str):
+        value = self.readback.enum_strings.index(value)
         await self.parent.opened.write(bool(value))
         await self.parent.closed.write(not bool(value))
         await self.readback.write(bool(value))
