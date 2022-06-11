@@ -13,6 +13,7 @@ from caproto.server import PVGroup, SubGroup, pvproperty
 from .areadetector import StatsPlugin
 from .motor import Motor
 from .utils import pvproperty_with_rbv, write_if_differs
+from .valve import VGC
 
 
 class BtpsMotorsAndCameras(PVGroup):
@@ -47,23 +48,6 @@ class BtpsMotorsAndCameras(PVGroup):
         LAS:LHN:BAY1:CAM:02 (ioc-lhn-bay1-ff-01)
         LAS:LHN:BAY3:CAM:02 (?, assumed)
         LAS:LHN:BAY4:CAM:02 (ioc-lhn-bay4-ff-01)
-
-    The following are sourced from plc-las-bts:
-
-    Source Gate Valve
-        LTLHN:LS1:VGC:01 (ioc-las-bts)
-        LTLHN:LS5:VGC:01 (ioc-las-bts)
-        LTLHN:LS8:VGC:01 (ioc-las-bts)
-
-    Destination Gate Valve PV
-        LTLHN:LD8:VGC:01 (ioc-las-bts) - TMO - IP1
-        LTLHN:LD10:VGC:01 (ioc-las-bts) - TMO - IP2
-        LTLHN:LD2:VGC:01 (ioc-las-bts) - TMO - IP3
-        LTLHN:LD6:VGC:01 (ioc-las-bts) - RIX - qRIXS
-        LTLHN:LD4:VGC:01 (ioc-las-bts) - RIX - ChemRIXS
-        LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
-        LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
-
     """
 
     # Linear motors (ioc-las-bts-mcs1)
@@ -430,6 +414,39 @@ class LssShutter(PVGroup):
         dtype=ChannelType.ENUM,
         enum_strings=["FALSE", "TRUE"],
     )
+
+
+class BtsGateValves(PVGroup):
+    """
+    Gate valves (VGC, non-legacy)
+
+    The following are sourced from plc-las-bts:
+
+    Source Gate Valve
+        LTLHN:LS1:VGC:01 (ioc-las-bts)
+        LTLHN:LS5:VGC:01 (ioc-las-bts)
+        LTLHN:LS8:VGC:01 (ioc-las-bts)
+
+    Destination Gate Valve PV
+        LTLHN:LD8:VGC:01 (ioc-las-bts) - TMO - IP1
+        LTLHN:LD10:VGC:01 (ioc-las-bts) - TMO - IP2
+        LTLHN:LD2:VGC:01 (ioc-las-bts) - TMO - IP3
+        LTLHN:LD6:VGC:01 (ioc-las-bts) - RIX - qRIXS
+        LTLHN:LD4:VGC:01 (ioc-las-bts) - RIX - ChemRIXS
+        LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
+        LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
+    """
+    source1 = SubGroup(VGC, prefix="LTLHN:LS1:VGC:01")
+    source3 = SubGroup(VGC, prefix="LTLHN:LS5:VGC:01")
+    source4 = SubGroup(VGC, prefix="LTLHN:LS8:VGC:01")
+
+    dest1 = SubGroup(VGC, prefix="LTLHN:LD8:VGC:01")  # TMO - IP1
+    dest2 = SubGroup(VGC, prefix="LTLHN:LD10:VGC:01")  # TMO - IP2
+    dest3 = SubGroup(VGC, prefix="LTLHN:LD2:VGC:01")  # TMO - IP3
+    dest4 = SubGroup(VGC, prefix="LTLHN:LD6:VGC:01")  # RIX - qRIXS
+    dest5 = SubGroup(VGC, prefix="LTLHN:LD4:VGC:01")  # RIX - ChemRIXS
+    dest6 = SubGroup(VGC, prefix="LTLHN:LD14:VGC:01")  # XPP
+    dest7 = SubGroup(VGC, prefix="LTLHN:LD9:VGC:01")  # Laser Lab
 
 
 class LssShutters(PVGroup):

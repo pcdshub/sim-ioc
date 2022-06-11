@@ -8,8 +8,8 @@ from typing import cast
 from caproto import ChannelData
 from caproto.server import AsyncLibraryLayer, PVGroup, SubGroup, pvproperty
 
-from ..db.btps import (BtpsMotorsAndCameras, BtpsState, LssShutters,
-                       RangeComparison)
+from ..db.btps import (BtpsMotorsAndCameras, BtpsState, BtsGateValves,
+                       LssShutters, RangeComparison)
 from .utils import main
 
 
@@ -99,6 +99,7 @@ class BtpsSimulator(PVGroup):
     motors: BtpsMotorsAndCameras = SubGroup(BtpsMotorsAndCameras, prefix="")
     state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
     shutters: LssShutters = SubGroup(LssShutters, prefix="")
+    gate_valves: BtsGateValves = SubGroup(BtsGateValves, prefix="")
     load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
 
     @load_config.startup
