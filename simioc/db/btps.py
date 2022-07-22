@@ -230,29 +230,29 @@ class DestinationConfig(PVGroup):
     """BTPS per-destination configuration settings and state."""
 
     name_ = pvproperty(
-        name="Name_RBV",
+        name="BTPS:Name_RBV",
         doc="Destination name",
         value="name",
         max_length=255,
     )
-    source1: SourceConfig = SubGroup(
+    ls1: SourceConfig = SubGroup(
         SourceConfig,
-        prefix="SRC:01:",
-        doc="Settings for source 1"
+        prefix="LS1:BTPS:",
+        doc="Settings for source LS1, bay 1"
     )
-    source3: SourceConfig = SubGroup(
+    ls5: SourceConfig = SubGroup(
         SourceConfig,
-        prefix="SRC:03:",
-        doc="Settings for source 3"
+        prefix="LS5:BTPS:",
+        doc="Settings for source LS5, bay 3"
     )
-    source4: SourceConfig = SubGroup(
+    ls8: SourceConfig = SubGroup(
         SourceConfig,
-        prefix="SRC:04:",
-        doc="Settings for source 4"
+        prefix="LS8:BTPS:",
+        doc="Settings for source LS8, bay 4"
     )
     # exit_valve = SubGroup(VGC, prefix="DestValve", doc="Exit valve for the destination")
     exit_valve_ready = pvproperty(
-        name="ExitValveReady_RBV",
+        name="BTPS:ExitValveReady_RBV",
         doc="Exit valve is open and ready",
         dtype=ChannelType.ENUM,
         enum_strings=["Not ready", "Ready"],
@@ -262,9 +262,9 @@ class DestinationConfig(PVGroup):
     def sources(self) -> Dict[int, SourceConfig]:
         """Destination configurations."""
         return {
-            1: self.source1,
-            3: self.source3,
-            4: self.source4,
+            1: self.ls1,
+            5: self.ls5,
+            8: self.ls8,
         }
 
     async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
@@ -436,17 +436,38 @@ class BtsGateValves(PVGroup):
         LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
         LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
     """
-    source1 = SubGroup(VGC, prefix="LTLHN:LS1:VGC:01")
-    source3 = SubGroup(VGC, prefix="LTLHN:LS5:VGC:01")
-    source4 = SubGroup(VGC, prefix="LTLHN:LS8:VGC:01")
+    ls1 = SubGroup(VGC, prefix="LTLHN:LS1:VGC:01")
+    ls5 = SubGroup(VGC, prefix="LTLHN:LS5:VGC:01")
+    ls8 = SubGroup(VGC, prefix="LTLHN:LS8:VGC:01")
 
-    dest1 = SubGroup(VGC, prefix="LTLHN:LD8:VGC:01")  # TMO - IP1
-    dest2 = SubGroup(VGC, prefix="LTLHN:LD10:VGC:01")  # TMO - IP2
-    dest3 = SubGroup(VGC, prefix="LTLHN:LD2:VGC:01")  # TMO - IP3
-    dest4 = SubGroup(VGC, prefix="LTLHN:LD6:VGC:01")  # RIX - qRIXS
-    dest5 = SubGroup(VGC, prefix="LTLHN:LD4:VGC:01")  # RIX - ChemRIXS
-    dest6 = SubGroup(VGC, prefix="LTLHN:LD14:VGC:01")  # XPP
-    dest7 = SubGroup(VGC, prefix="LTLHN:LD9:VGC:01")  # Laser Lab
+    ld2 = SubGroup(VGC, prefix="LTLHN:LD2:VGC:01")  # TMO - IP3
+    ld4 = SubGroup(VGC, prefix="LTLHN:LD4:VGC:01")  # RIX - ChemRIXS
+    ld6 = SubGroup(VGC, prefix="LTLHN:LD6:VGC:01")  # RIX - qRIXS
+    ld8 = SubGroup(VGC, prefix="LTLHN:LD8:VGC:01")  # TMO - IP1
+    ld9 = SubGroup(VGC, prefix="LTLHN:LD9:VGC:01")  # Laser Lab
+    ld10 = SubGroup(VGC, prefix="LTLHN:LD10:VGC:01")  # TMO - IP2
+    ld14 = SubGroup(VGC, prefix="LTLHN:LD14:VGC:01")  # XPP
+
+    @property
+    def by_source(self) -> Dict[int, VGC]:
+        return {
+            1: self.ls1,
+            5: self.ls5,
+            8: self.ls8,
+        }
+
+    @property
+    def by_destination(self) -> Dict[int, VGC]:
+        return {
+            2: self.ld2,
+            4: self.ld4,
+            6: self.ld6,
+            8: self.ld8,
+            9: self.ld9,
+            10: self.ld10,
+            14: self.ld14,
+
+        }
 
 
 class LssShutters(PVGroup):
@@ -473,9 +494,9 @@ class LssShutters(PVGroup):
         LTLHN:LS5:LST:LSS_RBV (ioc-las-bts)
         LTLHN:LS8:LST:LSS_RBV (ioc-las-bts)
     """
-    source1 = SubGroup(LssShutter, prefix="LTLHN:LS1:LST:")
-    source3 = SubGroup(LssShutter, prefix="LTLHN:LS5:LST:")
-    source4 = SubGroup(LssShutter, prefix="LTLHN:LS8:LST:")
+    ls1 = SubGroup(LssShutter, prefix="LTLHN:LS1:LST:")
+    ls5 = SubGroup(LssShutter, prefix="LTLHN:LS5:LST:")
+    ls8 = SubGroup(LssShutter, prefix="LTLHN:LS8:LST:")
 
 
 class BtpsState(PVGroup):
@@ -485,56 +506,91 @@ class BtpsState(PVGroup):
 
     config = SubGroup(GlobalConfig, prefix="Config:", doc="Global configuration")
 
-    shutter1: ShutterSafety = SubGroup(
+    ls1: ShutterSafety = SubGroup(
         ShutterSafety,
-        prefix="Shutter:01:",
-        doc="Source Shutter 1",
+        prefix="LS1:BTPS:",
+        doc="Source Shutter LS1 (bay 1)",
     )
-    shutter3: ShutterSafety = SubGroup(
+    ls5: ShutterSafety = SubGroup(
         ShutterSafety,
-        prefix="Shutter:03:",
-        doc="Source Shutter 3",
+        prefix="LS5:BTPS:",
+        doc="Source Shutter LS5 (bay 3)",
     )
-    shutter4: ShutterSafety = SubGroup(
+    ls8: ShutterSafety = SubGroup(
         ShutterSafety,
-        prefix="Shutter:04:",
-        doc="Source Shutter 4",
+        prefix="LS8:BTPS:",
+        doc="Source Shutter LS8 (bay 4)",
     )
 
-    dest1: DestinationConfig = SubGroup(
+    ld1: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:01:",
+        prefix="LD1:",
         doc="Destination 1",
     )
-    dest2: DestinationConfig = SubGroup(
+    ld2: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:02:",
+        prefix="LD2:",
         doc="Destination 2",
     )
-    dest3: DestinationConfig = SubGroup(
+    ld3: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:03:",
+        prefix="LD3:",
         doc="Destination 3",
     )
-    dest4: DestinationConfig = SubGroup(
+    ld4: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:04:",
+        prefix="LD4:",
         doc="Destination 4",
     )
-    dest5: DestinationConfig = SubGroup(
+    ld5: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:05:",
+        prefix="LD5:",
         doc="Destination 5",
     )
-    dest6: DestinationConfig = SubGroup(
+    ld6: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:06:",
+        prefix="LD6:",
         doc="Destination 6",
     )
-    dest7: DestinationConfig = SubGroup(
+    ld7: DestinationConfig = SubGroup(
         DestinationConfig,
-        prefix="DEST:07:",
+        prefix="LD7:",
         doc="Destination 7",
+    )
+    ld8: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD8:",
+        doc="Destination 8",
+    )
+    ld9: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD9:",
+        doc="Destination 9",
+    )
+    ld10: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD10:",
+        doc="Destination 10",
+    )
+    ld11: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD11:",
+        doc="Destination 11",
+    )
+    ld12: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD12:",
+        doc="Destination 12",
+    )
+    ld13: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD13:",
+        doc="Destination 13",
+    )
+    ld14: DestinationConfig = SubGroup(
+        DestinationConfig,
+        prefix="LD14:",
+        doc="Destination 14",
     )
 
     sim_enable = pvproperty(value=1, name="SimEnable", record="bo")
@@ -569,17 +625,24 @@ class BtpsState(PVGroup):
     @property
     def shutters(self) -> Dict[int, ShutterSafety]:
         """Source shutters."""
-        return {1: self.shutter1, 3: self.shutter3, 4: self.shutter4}
+        return {1: self.ls1, 5: self.ls5, 8: self.ls8}
 
     @property
     def destinations(self) -> Dict[int, DestinationConfig]:
         """Destination configurations."""
         return {
-            1: self.dest1,
-            2: self.dest2,
-            3: self.dest3,
-            4: self.dest4,
-            5: self.dest5,
-            6: self.dest6,
-            7: self.dest7,
+            1: self.ld1,
+            2: self.ld2,
+            3: self.ld3,
+            4: self.ld4,
+            5: self.ld5,
+            6: self.ld6,
+            7: self.ld7,
+            8: self.ld8,
+            9: self.ld9,
+            10: self.ld10,
+            11: self.ld11,
+            12: self.ld12,
+            13: self.ld13,
+            14: self.ld14,
         }

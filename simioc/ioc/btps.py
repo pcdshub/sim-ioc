@@ -83,7 +83,7 @@ sample_config = sum(
                 goniometer=0.0,
             ),
         ]
-        for source in [1, 3, 4]
+        for source in [1, 5, 8]
     ),
     []
 )
@@ -97,7 +97,7 @@ class BtpsSimulator(PVGroup):
     """
 
     motors: BtpsMotorsAndCameras = SubGroup(BtpsMotorsAndCameras, prefix="")
-    state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:BTPS:")
+    state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:")
     shutters: LssShutters = SubGroup(LssShutters, prefix="")
     gate_valves: BtsGateValves = SubGroup(BtsGateValves, prefix="")
     load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
