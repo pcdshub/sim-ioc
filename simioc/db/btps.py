@@ -214,9 +214,13 @@ class SourceConfig(PVGroup):
         self,
         state: BtpsState,
         motors: BtpsMotorsAndCameras,
+        valves: BtsGateValves,
         destination: DestinationConfig,
     ):
         """Simulate and update state."""
+        # TODO: always ready
+        await write_if_differs(self.entry_valve_ready, 1)
+
         for check in [self.linear, self.rotary, self.goniometer]:
             check = cast(RangeComparison, check)
             await check.simulate()
@@ -267,10 +271,15 @@ class DestinationConfig(PVGroup):
             8: self.ls8,
         }
 
-    async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
+    async def simulate(
+        self, state: BtpsState, motors: BtpsMotorsAndCameras, valves: BtsGateValves
+    ):
         """Simulate and update state."""
+        # TODO: always ready
+        await write_if_differs(self.exit_valve_ready, 1)
+
         for source in self.sources.values():
-            await source.simulate(state, motors, self)
+            await source.simulate(state, motors, valves, self)
 
 
 class GlobalConfig(PVGroup):
@@ -346,7 +355,9 @@ class ShutterSafety(PVGroup):
         enum_strings=["Unsafe", "Safe"],
     )
 
-    async def simulate(self, state: BtpsState, motors: BtpsMotorsAndCameras):
+    async def simulate(
+        self, state: BtpsState, motors: BtpsMotorsAndCameras, valves: BtsGateValves
+    ):
         """Simulate and update state."""
 
 
@@ -381,9 +392,10 @@ class LssShutter(PVGroup):
 
     async def _put_request(self, instance, value: str):
         value = self.readback.enum_strings.index(value)
-        await self.parent.opened.write(bool(value))
-        await self.parent.closed.write(not bool(value))
-        await self.readback.write(bool(value))
+        if self.parent.permission.value == "TRUE":
+            await self.parent.opened.write(bool(value))
+            await self.parent.closed.write(not bool(value))
+            await self.readback.write(bool(value))
 
     request = pvproperty_with_rbv(
         name="REQ",
@@ -616,11 +628,22 @@ class BtpsState(PVGroup):
                 "in the IOC named 'motors'."
             ) from None
 
+        try:
+            valves: BtsGateValves = self.parent.gate_valves
+        except AttributeError:
+            raise RuntimeError(
+                "To enable simulations, include a BtsGateValves SubGroup "
+                "in the IOC named 'gate_valves'."
+            ) from None
+
+        for valve in list(valves.by_source.values()) + list(valves.by_destination.values()):
+            await valve.simulate()
+
         for shutter in self.shutters.values():
-            await shutter.simulate(self, motors)
+            await shutter.simulate(self, motors, valves)
 
         for dest in self.destinations.values():
-            await dest.simulate(self, motors)
+            await dest.simulate(self, motors, valves)
 
     @property
     def shutters(self) -> Dict[int, ShutterSafety]:
