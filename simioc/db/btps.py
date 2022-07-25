@@ -287,12 +287,15 @@ class GlobalConfig(PVGroup):
 
     system_override = pvproperty_with_rbv(
         name="SystemOverride",
-        value=0.0,
+        value="FALSE",
         doc="System override for when BTPS gets in the way",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
     )
 
     max_frame_time = pvproperty_with_rbv(
         name="MaxFrameTime",
+        precision=2,
         value=0.0,
         doc=(
             "Maximum time between frame updates in seconds to be considered "
