@@ -516,7 +516,11 @@ class BtpsState(PVGroup):
     Beam Transport Protection System (BTPS) State
     """
 
-    config = SubGroup(GlobalConfig, prefix="Config:", doc="Global configuration")
+    config = SubGroup(
+        GlobalConfig,
+        prefix="BTPS:Config:",
+        doc="Global configuration settings for BTPS"
+    )
 
     ls1: ShutterSafety = SubGroup(
         ShutterSafety,
