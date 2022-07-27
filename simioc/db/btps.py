@@ -11,7 +11,7 @@ from caproto import ChannelType
 from caproto.server import PVGroup, SubGroup, pvproperty
 
 from .areadetector import StatsPlugin
-from .motor import Motor
+from .motor import Motor, SmarActMotor
 from .utils import pvproperty_with_rbv, write_if_differs
 from .valve import VGC
 
@@ -51,10 +51,18 @@ class BtpsMotorsAndCameras(PVGroup):
     """
 
     # Linear motors (ioc-las-bts-mcs1)
-    m1: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m1", user_limits=(0, 0))
-    m4: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m4", user_limits=(0, 2000))
-    m7: Motor = SubGroup(
-        Motor,
+    m1: SmarActMotor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m1",
+        user_limits=(0, 0),
+    )
+    m4: SmarActMotor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m4",
+        user_limits=(0, 2000),
+    )
+    m7: SmarActMotor = SubGroup(
+        SmarActMotor,
         prefix="LAS:BTS:MCS2:01:m7",
         position=405.0,
         user_limits=(400, 1446.53),
