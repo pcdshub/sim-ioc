@@ -55,17 +55,20 @@ class BtpsMotorsAndCameras(PVGroup):
         SmarActMotor,
         prefix="LAS:BTS:MCS2:01:m1",
         user_limits=(0, 0),
+        velocity=100.0,
     )
     m4: SmarActMotor = SubGroup(
         SmarActMotor,
         prefix="LAS:BTS:MCS2:01:m4",
         user_limits=(0, 2000),
+        velocity=100.0,
     )
     m7: SmarActMotor = SubGroup(
         SmarActMotor,
         prefix="LAS:BTS:MCS2:01:m7",
         position=405.0,
         user_limits=(400, 1446.53),
+        velocity=100.0,
     )
 
     # Rotary motors
