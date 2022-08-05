@@ -220,9 +220,17 @@ class SourceConfig(PVGroup):
         dtype=ChannelType.ENUM,
         enum_strings=["Data Invalid", "Data Valid"],
     )
+    in_position = pvproperty(
+        name="InPosition_RBV",
+        doc="Is the linear positioner in position for this source/dest?",
+        value="FALSE",
+        dtype=ChannelType.ENUM,
+        enum_strings=["FALSE", "TRUE"],
+    )
 
     async def simulate(
         self,
+        source_idx: int,
         state: BtpsState,
         motors: BtpsMotorsAndCameras,
         valves: BtsGateValves,
@@ -232,9 +240,23 @@ class SourceConfig(PVGroup):
         # TODO: always ready
         await write_if_differs(self.entry_valve_ready, 1)
 
+        linear_motor = {
+            1: motors.m1,
+            5: motors.m4,
+            8: motors.m7,
+        }[source_idx]
+
+        await write_if_differs(
+            self.linear.value,
+            linear_motor.motor.field_inst.user_readback_value.value
+        )
+
         for check in [self.linear, self.rotary, self.goniometer]:
             check = cast(RangeComparison, check)
             await check.simulate()
+
+        linear_in_range = int(self.linear.in_range.value in (1, "In range"))
+        await write_if_differs(self.in_position, linear_in_range)
 
         for centroid in [self.near_field, self.far_field]:
             centroid = cast(CentroidConfig, centroid)
@@ -289,8 +311,8 @@ class DestinationConfig(PVGroup):
         # TODO: always ready
         await write_if_differs(self.exit_valve_ready, 1)
 
-        for source in self.sources.values():
-            await source.simulate(state, motors, valves, self)
+        for source_idx, source in self.sources.items():
+            await source.simulate(source_idx, state, motors, valves, self)
 
 
 class GlobalConfig(PVGroup):
@@ -326,7 +348,6 @@ class GlobalConfig(PVGroup):
 
 class ShutterSafety(PVGroup):
     """BTPS per-source shutter safety status."""
-
     open_request = pvproperty_with_rbv(
         name="UserOpen",
         doc="User request to open/close shutter",
@@ -369,10 +390,39 @@ class ShutterSafety(PVGroup):
         enum_strings=["Unsafe", "Safe"],
     )
 
+    current_destination = pvproperty(
+        name="CurrentLD_RBV",
+        doc="BTPS-determined current laser destination",
+        value=1,
+        lower_alarm_limit=0,  # 1-14 are valid now
+        upper_alarm_limit=15,
+        dtype=ChannelType.INT,
+    )
+
     async def simulate(
-        self, state: BtpsState, motors: BtpsMotorsAndCameras, valves: BtsGateValves
+        self,
+        source: int,
+        state: BtpsState,
+        motors: BtpsMotorsAndCameras,
+        valves: BtsGateValves,
     ):
         """Simulate and update state."""
+        marked_in_position = []
+        for dest_idx, dest in state.destinations.items():
+            if dest.sources[source].in_position.value in (1, "TRUE"):
+                marked_in_position.append(dest_idx)
+
+        if not marked_in_position:
+            # Unknown position
+            current_dest = 0
+        elif len(marked_in_position) == 1:
+            # Unknown position
+            current_dest, = marked_in_position
+        else:
+            # Misconfiguration or other issue
+            current_dest = -1
+
+        await write_if_differs(self.current_destination, current_dest)
 
 
 class BtpsCameraStatus(PVGroup):
@@ -668,11 +718,11 @@ class BtpsState(PVGroup):
         for valve in list(valves.by_source.values()) + list(valves.by_destination.values()):
             await valve.simulate()
 
-        for shutter in self.shutters.values():
-            await shutter.simulate(self, motors, valves)
-
         for dest in self.destinations.values():
             await dest.simulate(self, motors, valves)
+
+        for idx, shutter in self.shutters.items():
+            await shutter.simulate(idx, self, motors, valves)
 
     @property
     def shutters(self) -> Dict[int, ShutterSafety]:

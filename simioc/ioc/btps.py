@@ -166,7 +166,7 @@ class BtpsSimulator(PVGroup):
                 (source.rotary, conf.rotary),
             ]:
                 range_ = cast(RangeComparison, range_)
-                await range_.set_nominal(nominal)
+                await range_.set_nominal(nominal, atol=5.0)
 
 
 if __name__ == "__main__":
