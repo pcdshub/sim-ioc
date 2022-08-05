@@ -404,12 +404,22 @@ class BtpsAllCameraStatus(PVGroup):
 class LssShutter(PVGroup):
     """Beam transport system shutter interface via ioc-las-bts."""
 
-    async def _put_request(self, instance, value: str):
-        value = self.readback.enum_strings.index(value)
-        if self.parent.permission.value == "TRUE":
-            await self.parent.opened.write(bool(value))
-            await self.parent.closed.write(not bool(value))
-            await self.readback.write(bool(value))
+    async def _shutter_request(self, instance, value: str):
+        open_request = value in (1, "TRUE")
+        if self.permission.value in (1, "TRUE"):  # caproto bug
+            await self.opened.write(open_request)
+            await self.closed.write(not open_request)
+        await self.request.readback.write(open_request)
+
+    async def _put_request_group(self, instance, value: str):
+        # Putter that happens inside of the pvproperty_with_rbv subgroup,
+        # so `self` is weird
+        await self.parent._shutter_request(instance, value)
+
+    async def _permission_change(self, instance, value: str):
+        if value in (0, "FALSE"):
+            await self.opened.write("FALSE")
+            await self.closed.write("TRUE")
 
     request = pvproperty_with_rbv(
         name="REQ",
@@ -417,7 +427,7 @@ class LssShutter(PVGroup):
         doc="User request to open",
         dtype=ChannelType.ENUM,
         enum_strings=["FALSE", "TRUE"],
-        put=_put_request,
+        put=_put_request_group,
     )
     opened = pvproperty(
         name="OPN_RBV",
@@ -439,6 +449,7 @@ class LssShutter(PVGroup):
         doc="LSS Permission status",
         dtype=ChannelType.ENUM,
         enum_strings=["FALSE", "TRUE"],
+        put=_permission_change,
     )
 
 
