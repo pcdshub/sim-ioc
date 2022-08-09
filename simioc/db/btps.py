@@ -72,14 +72,44 @@ class BtpsMotorsAndCameras(PVGroup):
     )
 
     # Rotary motors
-    m2: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m2", user_limits=(0, 0))
-    m6: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m6", user_limits=(-95, 95))
-    m8: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m8", user_limits=(-300, 300))
+    m2: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m2",
+        user_limits=(0, 0),
+        velocity=100.0,
+    )
+    m6: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m6",
+        user_limits=(-95, 95),
+        velocity=100.0,
+    )
+    m8: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m8",
+        user_limits=(-300, 300),
+        velocity=100.0,
+    )
 
     # Goniometers
-    m3: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m3", user_limits=(0, 0))
-    m5: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m5", user_limits=(0, 0))
-    m9: Motor = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m9", user_limits=(0, 0))
+    m3: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m3",
+        user_limits=(0, 0),
+        velocity=100.0,
+    )
+    m5: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m5",
+        user_limits=(0, 0),
+        velocity=100.0,
+    )
+    m9: Motor = SubGroup(
+        SmarActMotor,
+        prefix="LAS:BTS:MCS2:01:m9",
+        user_limits=(0, 0),
+        velocity=100.0,
+    )
 
     nf1: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:01:Stats2:")
     nf3: StatsPlugin = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:01:Stats2:")
