@@ -13,8 +13,8 @@ class StatsPlugin(PVGroup):
 
     enable = pvproperty(value=1, name="SimEnable")
     array_counter = pvproperty(value=0, name="ArrayCounter_RBV")
-    centroid_x = pvproperty(value=0.0, name="CentroidX_RBV")
-    centroid_y = pvproperty(value=0.0, name="CentroidY_RBV")
+    centroid_x = pvproperty(value=0.0, precision=2, name="CentroidX_RBV")
+    centroid_y = pvproperty(value=0.0, precision=2, name="CentroidY_RBV")
     total = pvproperty(value=0.0, name="Total_RBV")
 
     @enable.scan(period=1)
