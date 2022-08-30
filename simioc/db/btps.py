@@ -433,10 +433,21 @@ class ShutterSafety(PVGroup):
         self,
         source: int,
         state: BtpsState,
+        lss_shutters: LssShutters,
         motors: BtpsMotorsAndCameras,
         valves: BtsGateValves,
     ):
         """Simulate and update state."""
+        await write_if_differs(
+            self.lss_open_request,
+            self.open_request.readback.raw_value
+        )
+
+        await write_if_differs(
+            lss_shutters.by_source[source].request.setpoint,
+            self.open_request.readback.raw_value,
+        )
+
         marked_in_position = []
         for dest_idx, dest in state.destinations.items():
             if dest.sources[source].in_position.value in (1, "TRUE"):
@@ -525,12 +536,49 @@ class LssShutter(PVGroup):
     )
     permission = pvproperty(
         name="LSS_RBV",
-        value=0,
+        value=1,  # Not the default, of course, but convenient for simulation
         doc="LSS Permission status",
         dtype=ChannelType.ENUM,
         enum_strings=["FALSE", "TRUE"],
         put=_permission_change,
     )
+
+
+class LssShutters(PVGroup):
+    """
+    Shutter readback status and request status.
+
+    LSS Shutter Request
+        LTLHN:LS1:LST:REQ_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:REQ_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:REQ_RBV (ioc-las-bts)
+
+    LSS Shutter State - Open
+        LTLHN:LS1:LST:OPN_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:OPN_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:OPN_RBV (ioc-las-bts)
+
+    LSS Shutter State - Closed
+        LTLHN:LS1:LST:CLS_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:CLS_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:CLS_RBV (ioc-las-bts)
+
+    LSS Permission
+        LTLHN:LS1:LST:LSS_RBV (ioc-las-bts)
+        LTLHN:LS5:LST:LSS_RBV (ioc-las-bts)
+        LTLHN:LS8:LST:LSS_RBV (ioc-las-bts)
+    """
+    ls1 = SubGroup(LssShutter, prefix="LTLHN:LS1:LST:")
+    ls5 = SubGroup(LssShutter, prefix="LTLHN:LS5:LST:")
+    ls8 = SubGroup(LssShutter, prefix="LTLHN:LS8:LST:")
+
+    @property
+    def by_source(self) -> Dict[int, LssShutter]:
+        return {
+            1: self.ls1,
+            5: self.ls5,
+            8: self.ls8,
+        }
 
 
 class BtsGateValves(PVGroup):
@@ -585,35 +633,6 @@ class BtsGateValves(PVGroup):
             14: self.ld14,
 
         }
-
-
-class LssShutters(PVGroup):
-    """
-    Shutter readback status and request status.
-
-    LSS Shutter Request
-        LTLHN:LS1:LST:REQ_RBV (ioc-las-bts)
-        LTLHN:LS5:LST:REQ_RBV (ioc-las-bts)
-        LTLHN:LS8:LST:REQ_RBV (ioc-las-bts)
-
-    LSS Shutter State - Open
-        LTLHN:LS1:LST:OPN_RBV (ioc-las-bts)
-        LTLHN:LS5:LST:OPN_RBV (ioc-las-bts)
-        LTLHN:LS8:LST:OPN_RBV (ioc-las-bts)
-
-    LSS Shutter State - Closed
-        LTLHN:LS1:LST:CLS_RBV (ioc-las-bts)
-        LTLHN:LS5:LST:CLS_RBV (ioc-las-bts)
-        LTLHN:LS8:LST:CLS_RBV (ioc-las-bts)
-
-    LSS Permission
-        LTLHN:LS1:LST:LSS_RBV (ioc-las-bts)
-        LTLHN:LS5:LST:LSS_RBV (ioc-las-bts)
-        LTLHN:LS8:LST:LSS_RBV (ioc-las-bts)
-    """
-    ls1 = SubGroup(LssShutter, prefix="LTLHN:LS1:LST:")
-    ls5 = SubGroup(LssShutter, prefix="LTLHN:LS5:LST:")
-    ls8 = SubGroup(LssShutter, prefix="LTLHN:LS8:LST:")
 
 
 class BtpsState(PVGroup):
@@ -731,10 +750,12 @@ class BtpsState(PVGroup):
 
         try:
             motors: BtpsMotorsAndCameras = self.parent.motors
+            lss_shutters: LssShutters = self.parent.shutters
         except AttributeError:
             raise RuntimeError(
                 "To enable simulations, include a BtpsMotorsAndCameras SubGroup "
-                "in the IOC named 'motors'."
+                "in the IOC named 'motors' and an LssShutters instance named "
+                "'shutters'."
             ) from None
 
         try:
@@ -752,7 +773,7 @@ class BtpsState(PVGroup):
             await dest.simulate(self, motors, valves)
 
         for idx, shutter in self.shutters.items():
-            await shutter.simulate(idx, self, motors, valves)
+            await shutter.simulate(idx, self, lss_shutters, motors, valves)
 
     @property
     def shutters(self) -> Dict[int, ShutterSafety]:
