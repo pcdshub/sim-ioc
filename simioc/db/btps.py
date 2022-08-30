@@ -324,6 +324,13 @@ class DestinationConfig(PVGroup):
         dtype=ChannelType.ENUM,
         enum_strings=["Not ready", "Ready"],
     )
+    yield_control = pvproperty_with_rbv(
+        name="BTPS:YieldsControl",
+        doc="Destination yields control to others",
+        dtype=ChannelType.ENUM,
+        enum_strings=["Using beam", "Yielding"],
+        value=1,
+    )
 
     @property
     def sources(self) -> Dict[int, SourceConfig]:
