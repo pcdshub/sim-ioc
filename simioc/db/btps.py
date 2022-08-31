@@ -363,6 +363,14 @@ class GlobalConfig(PVGroup):
         enum_strings=["FALSE", "TRUE"],
     )
 
+    maintenance = pvproperty_with_rbv(
+        name="Maintenance",
+        value=0,
+        doc="System maintenance mode indicator",
+        dtype=ChannelType.ENUM,
+        enum_strings=["Normal operation", "Maintenance"],
+    )
+
     max_frame_time = pvproperty_with_rbv(
         name="MaxFrameTime",
         precision=2,
