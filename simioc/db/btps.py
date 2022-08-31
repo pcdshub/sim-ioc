@@ -332,6 +332,10 @@ class DestinationConfig(PVGroup):
         value=1,
     )
 
+    def __init__(self, *args, destination_name: str = "Unknown", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name_._data["value"] = destination_name
+
     @property
     def sources(self) -> Dict[int, SourceConfig]:
         """Destination configurations."""
@@ -686,6 +690,7 @@ class BtpsState(PVGroup):
         DestinationConfig,
         prefix="LD2:",
         doc="Destination 2",
+        destination_name="TMO IP3",
     )
     ld3: DestinationConfig = SubGroup(
         DestinationConfig,
@@ -696,6 +701,7 @@ class BtpsState(PVGroup):
         DestinationConfig,
         prefix="LD4:",
         doc="Destination 4",
+        destination_name="RIX ChemRIXS",
     )
     ld5: DestinationConfig = SubGroup(
         DestinationConfig,
@@ -706,6 +712,7 @@ class BtpsState(PVGroup):
         DestinationConfig,
         prefix="LD6:",
         doc="Destination 6",
+        destination_name="RIX QRIXS",
     )
     ld7: DestinationConfig = SubGroup(
         DestinationConfig,
@@ -716,16 +723,19 @@ class BtpsState(PVGroup):
         DestinationConfig,
         prefix="LD8:",
         doc="Destination 8",
+        destination_name="TMO IP1",
     )
     ld9: DestinationConfig = SubGroup(
         DestinationConfig,
         prefix="LD9:",
         doc="Destination 9",
+        destination_name="Laser Lab",
     )
     ld10: DestinationConfig = SubGroup(
         DestinationConfig,
         prefix="LD10:",
         doc="Destination 10",
+        destination_name="TMO IP2",
     )
     ld11: DestinationConfig = SubGroup(
         DestinationConfig,
@@ -746,6 +756,7 @@ class BtpsState(PVGroup):
         DestinationConfig,
         prefix="LD14:",
         doc="Destination 14",
+        destination_name="XPP",
     )
 
     sim_enable = pvproperty(value=1, name="SimEnable", record="bo")
