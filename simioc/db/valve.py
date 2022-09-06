@@ -1,7 +1,7 @@
 from caproto import ChannelType
 from caproto.server import PVGroup, pvproperty
 
-from .utils import pvproperty_with_rbv
+from .utils import pvproperty_with_rbv, write_if_differs
 
 
 class Stopper(PVGroup):
@@ -208,6 +208,14 @@ class VFS(PVGroup):
 
 
 class ValveBase(PVGroup):
+    valve_position = pvproperty(
+        name=":POS_STATE_RBV",
+        value=0,
+        doc="Ex: OPEN, CLOSED, MOVING, INVALID, OPEN_F",
+        dtype=ChannelType.ENUM,
+        enum_strings=["OPEN", "CLOSED", "MOVING", "INVALID", "OPEN_F"],
+        read_only=True,
+    )
     open_command = pvproperty_with_rbv(
         name=":OPN_SW",
         value=0,
@@ -357,6 +365,21 @@ class VGC(VRC, PVGroup):
         max_length=80,
         read_only=True,
     )
+
+    async def simulate(self):
+        await write_if_differs(self.diff_press_ok, 1)
+        await write_if_differs(self.ext_ilk_ok, 1)
+        await write_if_differs(self.error, 0)
+        await write_if_differs(self.state, 1)
+        await write_if_differs(self.interlock_ok, 1)
+        if self.open_command.readback.value == "OPEN":
+            await write_if_differs(self.open_limit, 1)
+            await write_if_differs(self.closed_limit, 0)
+            await write_if_differs(self.valve_position, "OPEN")
+        else:
+            await write_if_differs(self.open_limit, 0)
+            await write_if_differs(self.closed_limit, 1)
+            await write_if_differs(self.valve_position, "CLOSED")
 
 
 class VGCLegacy(ValveBase, PVGroup):

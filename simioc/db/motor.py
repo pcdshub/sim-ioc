@@ -3,6 +3,8 @@ import caproto
 from caproto.server import PVGroup, SubGroup, get_pv_pair_wrapper, pvproperty
 from caproto.server.records import MotorFields, register_record
 
+from .utils import pvproperty_with_rbv
+
 
 async def broadcast_precision_to_fields(record):
     """Update precision of all fields to that of the given record."""
@@ -143,6 +145,43 @@ class Motor(PVGroup):
             self.motor, async_lib, self.defaults,
             tick_rate_hz=self.tick_rate_hz,
         )
+
+
+class SmarActMotor(Motor):
+    ptype = pvproperty_with_rbv(name=":PTYPE", value=0, doc="Positioner type")
+    step_voltage = pvproperty(
+        name=":STEP_VOLTAGE", value=0.0, doc="Voltage for sawtooth (0-100V)"
+    )
+    # Frequency of steps
+    step_freq = pvproperty(name=":STEP_FREQ", value=0.0, doc="Sawtooth drive frequency")
+    # Number of steps per step forward, backward command
+    jog_step_size = pvproperty(
+        name=":STEP_COUNT", value=0, doc="Number of steps per FWD/BWD command"
+    )
+    # Jog forward
+    jog_fwd = pvproperty(name=":STEP_FORWARD", value=0, doc="Jog the stage forward")
+    # Jog backward
+    jog_rev = pvproperty(name=":STEP_REVERSE", value=0, doc="Jog the stage backward")
+    # Total number of steps counted
+    total_step_count = pvproperty(
+        name=":TOTAL_STEP_COUNT",
+        value=0,
+        doc="Current open loop step count",
+        read_only=True,
+    )
+    # Reset steps ("home")
+    step_clear_cmd = pvproperty(
+        name=":CLEAR_COUNT", value=0, doc="Clear the current step count"
+    )
+    # Scan move
+    scan_pos = pvproperty(
+        name=":SCAN_POS", value=0, doc="Set current piezo voltage (in 16 bit ADC steps)"
+    )
+    scan_move = pvproperty(
+        name=":SCAN_MOVE",
+        value=0,
+        doc="Set current piezo voltage (in 16 bit ADC steps)",
+    )
 
 
 class BeckhoffAxisPLC(PVGroup):

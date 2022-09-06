@@ -2,124 +2,172 @@
 BTPS Simulator IOC for unit and integration tests.
 """
 
-import random
-from caproto.server import PVGroup, SubGroup, pvproperty
+import dataclasses
+from typing import cast
 
-from ..db.motor import Motor
+from caproto import ChannelData
+from caproto.server import AsyncLibraryLayer, PVGroup, SubGroup, pvproperty
+
+from ..db.btps import (BtpsMotorsAndCameras, BtpsState, BtsGateValves,
+                       LssShutters, RangeComparison)
 from .utils import main
 
 
-class StatsPlugin(PVGroup):
+@dataclasses.dataclass
+class SourceDestinationConfiguration:
+    source: int
+    destination: int
+
+    linear: float
+    rotary: float
+    goniometer: float
+
+
+# Bottom destinations (rough top centers, inside chamber)
+BOTTOM_PORTS = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+]
+TOP_PORTS = [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+]
+
+
+def guess_position_for_port(dest: int) -> float:
     """
-    Minimal AreaDetector stats plugin stand-in.
+    Make a guess at a linear stage position given the destination port number.
 
-    BTPS will check the array counter update rate and centroid values.
+    Parameters
+    ----------
+    dest : int
+        The destination port number.
+
+    Returns
+    -------
+    float
+        Linear stage position guess.
     """
-    enable = pvproperty(value=1, name="SimEnable")
-    array_counter = pvproperty(value=0, name="ArrayCounter_RBV")
-    centroid_x = pvproperty(value=0.0, name="CentroidX_RBV")
-    centroid_y = pvproperty(value=0.0, name="CentroidY_RBV")
+    # 8.5" spacing per side
+    # 215.9 mm port-to-port
+    port_spacing_mm = 215.9
+    top_start = 30.0000
+    bottom_start = top_start + port_spacing_mm / 2
 
-    @enable.scan(period=1)
-    async def enable(self, instance, async_lib):
-        if self.enable.value == 0:
-            return
-       
-        await self.array_counter.write(value=self.array_counter.value + 1)
-        await self.centroid_x.write(value=random.random())
-        await self.centroid_y.write(value=random.random())
+    if dest in TOP_PORTS:
+        port_index = TOP_PORTS.index(dest)
+        start = top_start
+    else:
+        port_index = BOTTOM_PORTS.index(dest)
+        start = bottom_start
+
+    return start + port_index * port_spacing_mm
 
 
-class BtpsPrototypeSimulator(PVGroup):
+sample_config = sum(
+    (
+        [
+            # TMO IP1 (LD8)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=8,
+                linear=guess_position_for_port(8),
+                rotary=-89.7,
+                goniometer=0.0,
+            ),
+            # TMO IP2 (LD10)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=10,
+                linear=guess_position_for_port(10),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+            # TMO IP3 (LD2)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=2,
+                linear=guess_position_for_port(2),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+            # qRIXS (LD6)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=6,
+                linear=guess_position_for_port(6),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+            # ChemRIXS (LD4)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=4,
+                linear=guess_position_for_port(4),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+            # XPP (LD14)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=14,
+                linear=guess_position_for_port(14),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+            # Laser lab (LD9)
+            SourceDestinationConfiguration(
+                source=source,
+                destination=9,
+                linear=guess_position_for_port(9),
+                rotary=-89.0,
+                goniometer=0.0,
+            ),
+        ]
+        for source in [1, 5, 8]
+    ),
+    []
+)
+
+
+class BtpsSimulator(PVGroup):
     """
-    A simulator for key BTPS PVs in the control system.
+    A simulator for BTPS motors, cameras, and range logic.
 
     Listed PVs do not include the default "SIM:" prefix.
-
-    PVs
-    ---
-    Motor - Linear
-        LAS:BTS:MCS2:01:m1 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m4 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m7 (ioc-las-bts-mcs1)
-
-    Motor - Rotary
-        LAS:BTS:MCS2:01:m2 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m6 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m8 (ioc-las-bts-mcs1)
-
-    Motor - Goniometer
-        LAS:BTS:MCS2:01:m3 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m5 (ioc-las-bts-mcs1)
-        LAS:BTS:MCS2:01:m9 (ioc-las-bts-mcs1)
-
-    NF Camera
-        LAS:LHN:BAY1:CAM:01 (ioc-lhn-bay1-nf-01)
-        LAS:LHN:BAY3:CAM:01 (?, assumed)
-        LAS:LHN:BAY4:CAM:01 (ioc-lhn-bay4-nf-01)
-
-    FF Camera
-        LAS:LHN:BAY1:CAM:02 (ioc-lhn-bay1-ff-01)
-        LAS:LHN:BAY3:CAM:02 (?, assumed)
-        LAS:LHN:BAY4:CAM:02 (ioc-lhn-bay4-ff-01)
-
-    The following are sourced from plc-las-bts:
-
-    Source Gate Valve
-        LTLHN:LS1:VGC:01 (ioc-las-bts)
-        LTLHN:LS5:VGC:01 (ioc-las-bts)
-        LTLHN:LS8:VGC:01 (ioc-las-bts)
-
-    Destination Gate Valve PV
-        LTLHN:LD8:VGC:01 (ioc-las-bts) - TMO - IP1
-        LTLHN:LD10:VGC:01 (ioc-las-bts) - TMO - IP2
-        LTLHN:LD2:VGC:01 (ioc-las-bts) - TMO - IP3
-        LTLHN:LD6:VGC:01 (ioc-las-bts) - RIX - qRIXS
-        LTLHN:LD4:VGC:01 (ioc-las-bts) - RIX - ChemRIXS
-        LTLHN:LD14:VGC:01 (ioc-las-bts) - XPP
-        LTLHN:LD9:VGC:01 (ioc-las-bts) - Laser Lab
-
-    The following *will be* sourced from plc-las-bts:
-
-    LSS Shutter Request
-        LTLHN:LS1:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:REQ (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-
-    LSS Shutter State - Open
-        LTLHN:LS1:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:OPN (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-
-    LSS Shutter State - Closed
-        LTLHN:LS1:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS5:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
-        LTLHN:LS8:LST:CLS (ioc-las-lhn-bhc-05 -> ioc-las-bts)
     """
 
-    # Linear motors (ioc-las-bts-mcs1)
-    m1 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m1", user_limits=(0, 0))
-    m4 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m4", user_limits=(0, 2000))
-    m7 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m7", position=405.0, user_limits=(400, 1446.53))
+    motors: BtpsMotorsAndCameras = SubGroup(BtpsMotorsAndCameras, prefix="")
+    state: BtpsState = SubGroup(BtpsState, prefix="LTLHN:")
+    shutters: LssShutters = SubGroup(LssShutters, prefix="")
+    gate_valves: BtsGateValves = SubGroup(BtsGateValves, prefix="")
+    load_config = pvproperty(name="LTLHN:BTPS:Sim:LoadConfig", value=0)
 
-    # Rotary motors
-    m2 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m2", user_limits=(0, 0))
-    m6 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m6", user_limits=(-95, 95))
-    m8 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m8", user_limits=(-300, 300))
+    @load_config.startup
+    async def load_config(self, instance: ChannelData, async_lib: AsyncLibraryLayer):
+        print("Loading sample config...")
+        for conf in sample_config:
+            dest = self.state.destinations[conf.destination]
+            source = dest.sources[conf.source]
 
-    # Goniometers
-    m3 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m3", user_limits=(0, 0))
-    m5 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m5", user_limits=(0, 0))
-    m9 = SubGroup(Motor, prefix="LAS:BTS:MCS2:01:m9", user_limits=(0, 0))
-
-    nf_cam_bay1 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:01:Stats1:")
-    nf_cam_bay3 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:01:Stats1:")
-    nf_cam_bay4 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:01:Stats1:")
-
-    ff_cam_bay1 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY1:CAM:02:Stats1:")
-    ff_cam_bay3 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY3:CAM:02:Stats1:")
-    ff_cam_bay4 = SubGroup(StatsPlugin, prefix="LAS:LHN:BAY4:CAM:02:Stats1:")
+            for range_, nominal in [
+                (source.linear, conf.linear),
+                (source.goniometer, conf.goniometer),
+                (source.rotary, conf.rotary),
+            ]:
+                range_ = cast(RangeComparison, range_)
+                await range_.set_nominal(nominal, atol=5.0)
 
 
 if __name__ == "__main__":
-    main(cls=BtpsPrototypeSimulator, default_prefix="SIM:")
+    main(cls=BtpsSimulator, default_prefix="SIM:")
