@@ -169,9 +169,3 @@ class QminiSpectrometer(PVGroup):
     fit_chisq = pvproperty(
         name=":CHISQ", value=0.0, doc="", precision=0, read_only=True
     )
-
-
-class QminiWithEvr(QminiSpectrometer, PVGroup):
-    event_code = pvproperty(name="None:TRIGNone:EC_RBV", value=0, doc="")
-    evr_width = pvproperty(name="None:TRIGNone:BW_TWIDCALC", value=0, doc="")
-    evr_delay = pvproperty(name="None:TRIGNone:BW_TDES", value=0, doc="")
