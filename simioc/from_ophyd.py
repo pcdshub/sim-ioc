@@ -83,6 +83,11 @@ def convert_signal(
                 **kwargs
             )
 
+    if isinstance(cpt, ophyd.FormattedComponent):
+        pvname = cpt.suffix
+        pvname = pvname.replace("self._", "")
+        pvname = pvname.replace("self.", "")
+
     doc = cpt.doc or ""
     if "Component attribute" in doc:
         doc = ""
