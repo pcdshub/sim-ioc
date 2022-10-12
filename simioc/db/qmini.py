@@ -25,6 +25,7 @@ class QminiSpectrometer(PVGroup):
     temperature = pvproperty(
         name=":TEMP", value=0.0, doc="", precision=0, read_only=True
     )
+    exposure_setpoint = pvproperty(name=":SET_EXPOSURE_TIME", value=0, doc="")
     exposure = pvproperty(name=":GET_EXPOSURE_TIME", value=0, doc="")
     trig_mode = pvproperty_with_rbv(
         name=":TRIG_MODE",
@@ -33,7 +34,15 @@ class QminiSpectrometer(PVGroup):
         dtype=ChannelType.ENUM,
         enum_strings=["Trigger On Start", "Trigger On End"],
     )
+    trig_delay_setpoint = pvproperty(name=":SET_TRIG_DELAY", value=0, doc="")
     trig_delay = pvproperty(name=":GET_TRIG_DELAY", value=0, doc="")
+    trig_pin_setpoint = pvproperty(
+        name=":SET_TRIG_PIN",
+        value=0,
+        doc="",
+        dtype=ChannelType.ENUM,
+        enum_strings=["Pin 0", "Pin 1", "Pin 2", "Pin 3"],
+    )
     trig_pin = pvproperty(
         name=":TRIG_PIN_RBV",
         value=0,
@@ -41,12 +50,26 @@ class QminiSpectrometer(PVGroup):
         dtype=ChannelType.ENUM,
         enum_strings=["Pin 0", "Pin 1", "Pin 2", "Pin 3"],
     )
+    trig_edge_setpoint = pvproperty(
+        name=":SET_TRIG_EDGE",
+        value=0,
+        doc="",
+        dtype=ChannelType.ENUM,
+        enum_strings=["Falling", "Rising"],
+    )
     trig_edge = pvproperty(
         name=":TRIG_EDGE_RBV",
         value=0,
         doc="",
         dtype=ChannelType.ENUM,
         enum_strings=["Falling", "Rising"],
+    )
+    trig_enable_setpoint = pvproperty(
+        name=":SET_TRIG_ENABLE",
+        value=0,
+        doc="",
+        dtype=ChannelType.ENUM,
+        enum_strings=["No", "Yes"],
     )
     trig_enable = pvproperty(
         name=":GET_TRIG_ENABLE",
