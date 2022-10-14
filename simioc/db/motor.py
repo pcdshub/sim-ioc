@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+from typing import Any, Dict, Optional, cast
+
 import caproto
-from caproto.server import PVGroup, SubGroup, get_pv_pair_wrapper, pvproperty
+from caproto.server import (AsyncLibraryLayer, PVGroup, SubGroup,
+                            get_pv_pair_wrapper, pvproperty)
 from caproto.server.records import MotorFields, register_record
+from caproto.server.server import PvpropertyDouble
 
 from .utils import pvproperty_with_rbv
 
@@ -15,8 +19,12 @@ async def broadcast_precision_to_fields(record):
             await prop.write_metadata(precision=precision)
 
 
-async def motor_record_simulator(instance, async_lib, defaults=None,
-                                 tick_rate_hz=10.):
+async def motor_record_simulator(
+    instance: PvpropertyDouble,
+    async_lib: AsyncLibraryLayer,
+    defaults: Optional[Dict[str, Any]] = None,
+    tick_rate_hz: float = 10.0,
+):
     """
     A simple motor record simulator.
 
@@ -42,9 +50,10 @@ async def motor_record_simulator(instance, async_lib, defaults=None,
             resolution=1e-6,
             tick_rate_hz=10.,
             user_limits=(0.0, 100.0),
+            egu="mm",
         )
 
-    fields = instance.field_inst  # type: MotorFields
+    fields = cast(MotorFields, instance.field_inst)
     have_new_position = False
 
     async def value_write_hook(fields, value):
@@ -58,13 +67,15 @@ async def motor_record_simulator(instance, async_lib, defaults=None,
     await instance.write_metadata(precision=defaults["precision"])
     await broadcast_precision_to_fields(instance)
 
-    await fields.user_readback_value.write(defaults["position"])
-    await instance.write(defaults["position"])
+    units = defaults.get("egu", "mm")
+    await fields.user_readback_value.write(defaults["position"], units=units)
+    await instance.write(defaults["position"], units=units)
     await fields.velocity.write(defaults["velocity"])
     await fields.seconds_to_velocity.write(defaults["acceleration"])
     await fields.motor_step_size.write(defaults["resolution"])
     await fields.user_low_limit.write(defaults["user_limits"][0])
     await fields.user_high_limit.write(defaults["user_limits"][1])
+    await fields.engineering_units.write(units)
 
     while True:
         dwell = 1. / tick_rate_hz
@@ -126,6 +137,7 @@ class Motor(PVGroup):
                  resolution=1e-6,
                  user_limits=(0.0, 100.0),
                  tick_rate_hz=10.,
+                 egu="mm",
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.tick_rate_hz = tick_rate_hz
@@ -136,6 +148,7 @@ class Motor(PVGroup):
             "acceleration": acceleration,
             "resolution": resolution,
             "user_limits": tuple(user_limits),
+            "egu": "mm",
         }
 
     @property

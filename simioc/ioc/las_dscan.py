@@ -69,7 +69,7 @@ class LaserDscanIOC(PVGroup):
     dataset: Dataset
 
     spectrometer = SubGroup(QminiSpectrometer, prefix="{spectrometer}")
-    motor = SubGroup(Motor, prefix="{motor}", velocity=100.0)
+    motor = SubGroup(Motor, prefix="{motor}", velocity=100.0, egu="mm")
     sim_enable = pvproperty(
         name="DScan:SimEnable",
         value=True,
