@@ -138,6 +138,21 @@ class Motor(PVGroup):
             "user_limits": tuple(user_limits),
         }
 
+    @property
+    def fields(self) -> MotorFields:
+        """Fields of the motor record."""
+        return self.motor.field_inst
+
+    @property
+    def user_setpoint_position(self) -> float:
+        """User setpoint position."""
+        return self.motor.value
+
+    @property
+    def user_readback_position(self) -> float:
+        """User readback position of the motor."""
+        return self.fields.user_readback_value.value
+
     @motor.startup
     async def motor(self, instance, async_lib):
         # Start the simulator:

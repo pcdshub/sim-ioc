@@ -1,7 +1,5 @@
-import numpy as np
-
-from caproto import ChannelData, ChannelType
-from caproto.server import AsyncLibraryLayer, PVGroup, pvproperty
+from caproto import ChannelType
+from caproto.server import PVGroup, pvproperty
 
 from .utils import pvproperty_with_rbv
 
@@ -194,11 +192,6 @@ class QminiSpectrometer(PVGroup):
     fit_chisq = pvproperty(
         name=":CHISQ", value=0.0, doc="", precision=0, read_only=True
     )
-
-    @wavelengths.scan(period=0.2)
-    async def wavelengths(self, instance: ChannelData, async_lib: AsyncLibraryLayer):
-        await self.wavelengths.write(np.linspace(50.0, 500.0, self.spectrum.max_length))
-        await self.spectrum.write(np.random.uniform(0.0, 1.0, size=self.spectrum.max_length))
 
 
 class QminiWithEvr(QminiSpectrometer, PVGroup):

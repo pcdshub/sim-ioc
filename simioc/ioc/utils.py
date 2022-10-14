@@ -1,7 +1,10 @@
+import pathlib
 from textwrap import dedent
 from typing import Dict, Optional, Type
 
 from caproto.server import PVGroup, ioc_arg_parser, run
+
+SIM_IOC_PATH = pathlib.Path(__file__).resolve().parent
 
 
 def main(cls: Type[PVGroup],
