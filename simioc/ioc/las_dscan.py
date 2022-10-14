@@ -11,7 +11,7 @@ class LaserDscanIOC(PVGroup):
     """
 
     spectrometer = SubGroup(QminiSpectrometer, prefix='{spectrometer}')
-    motor = SubGroup(Motor, prefix='{motor}')
+    motor = SubGroup(Motor, prefix='{motor}', velocity=100.0)
 
 
 if __name__ == '__main__':
