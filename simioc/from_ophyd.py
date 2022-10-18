@@ -8,8 +8,9 @@ import argparse
 import importlib
 import inspect
 import logging
-from typing import Any, List, Optional, Type, cast
+from typing import Any, Dict, Generator, List, Optional, Type, cast
 
+import lark
 import ophyd
 import whatrecord
 from ophyd.signal import EpicsSignalRO
@@ -36,7 +37,7 @@ def convert_signal(
     signal: ophyd.signal.EpicsSignalBase,
     value: Optional[Any] = 0,
     **kwargs,
-) -> str:
+) -> Generator[str, None, None]:
     """
     Take an ophyd component and an instantiated signal and return caproto
     PVGroup-compatible pvproperty code.
@@ -65,10 +66,27 @@ def convert_signal(
         Keyword arguments for the pvproperty.
     """
     cls = "pvproperty"
-    if setpoint_pvname:
+    if setpoint_pvname and setpoint_pvname != pvname:
         if f"{setpoint_pvname}_RBV" == pvname:
+            # We handle pvproperty-with-RBV here directly:
             cls = "pvproperty_with_rbv"
             pvname = setpoint_pvname
+        else:
+            # But other cases get their own signal entirely:
+            yield from convert_signal(
+                cpt=cpt,
+                attr=f"{attr}_setpoint",
+                pvname=setpoint_pvname,
+                setpoint_pvname=None,
+                signal=signal,
+                value=value,
+                **kwargs
+            )
+
+    if isinstance(cpt, ophyd.FormattedComponent):
+        pvname = cpt.suffix
+        pvname = pvname.replace("self._", "")
+        pvname = pvname.replace("self.", "")
 
     doc = cpt.doc or ""
     if "Component attribute" in doc:
@@ -81,11 +99,14 @@ def convert_signal(
         kwarg_str = ", " + ", ".join(f"{key}={value}" for key, value in kwargs.items())
     else:
         kwarg_str = ""
-    return f"""    {attr} = {cls}(name="{pvname}", value={value}, doc={doc!r}{kwarg_str})"""
+
+    yield f"""    {attr} = {cls}(name="{pvname}", value={value}, doc={doc!r}{kwarg_str})"""
 
 
 def find_record_by_suffix(
-    db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]
+    db: whatrecord.db.Database,
+    suffix: str,
+    all_pvnames: List[str]
 ) -> Optional[whatrecord.db.RecordInstance]:
     """
     Get the most-likely matching record from a provided Database.
@@ -118,7 +139,11 @@ def find_record_by_suffix(
             return match_to_instance[suffix]
 
 
-def info_from_db(db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]):
+def info_from_db(
+    db: whatrecord.db.Database,
+    suffix: str,
+    all_pvnames: List[str]
+) -> Dict[str, Any]:
     """
     Get pvproperty instantiation information from a whatrecord database.
 
@@ -182,7 +207,12 @@ def info_from_db(db: whatrecord.db.Database, suffix: str, all_pvnames: List[str]
                 value='""',
                 max_length=nelm if nelm else 40,
             )
-        raise
+
+        return dict(
+            value='[0]',
+            dtype=f"ChannelType.{ftvl}",
+            max_length=nelm if nelm else 40,
+        )
 
     return dict(value=0)
 
@@ -237,24 +267,28 @@ def convert_class(db: whatrecord.db.Database, cls: Type[ophyd.Device]):
     }
 
     converted_signals = []
-    for attr, sig in inst._signals.items():
-        if not hasattr(sig, "pvname"):
-            continue
-        if attr not in non_inherited_components:
-            continue
-        pvname = sig.pvname.replace("{{prefix}}", "")
+    signals_to_convert = [
+        (attr, sig, sig.pvname.replace("{{prefix}}", ""))
+        for attr, sig in inst._signals.items()
+        if hasattr(sig, "pvname") and attr in non_inherited_components
+    ]
+
+    for attr, sig, pvname in signals_to_convert:
         setpoint_pvname = getattr(sig, "setpoint_pvname", None)
         if setpoint_pvname is not None:
             setpoint_pvname = setpoint_pvname.replace("{{prefix}}", "")
-        cpt = getattr(cls, attr, None)
-        converted_signals.append(
-            convert_signal(
-                cpt,
-                attr,
-                pvname,
-                setpoint_pvname,
-                sig,
-                **info_from_db(db, pvname, all_pvnames),
+        cpt = getattr(cls, attr)
+        db_info = info_from_db(db, pvname, all_pvnames)
+        converted_signals.extend(
+            list(
+                convert_signal(
+                    cpt,
+                    attr,
+                    pvname,
+                    setpoint_pvname,
+                    sig,
+                    **db_info
+                )
             )
         )
 
@@ -288,10 +322,17 @@ def convert_from_ophyd(import_name: str, database_name: str):
 
     module = importlib.import_module(import_name)
 
-    db = cast(
-        whatrecord.Database,
-        whatrecord.parse(database_name),
-    )
+    try:
+        db = cast(
+            whatrecord.Database,
+            whatrecord.parse(database_name),
+        )
+    except lark.exceptions.UnexpectedToken:
+        logger.debug("Falling back to interpret the database as an EPICS v3 database...")
+        db = cast(
+            whatrecord.Database,
+            whatrecord.parse(database_name, v3=True),
+        )
 
     seen = set()
     to_check = list(
