@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import logging
 import pathlib
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -26,12 +26,24 @@ class Dataset:
     # Importing settings would require las_dispersion_scan to be importable
     # settings: Dict[str, Any]
 
-    def find_closest_spectrum(self, position: float) -> Tuple[np.ndarray, np.ndarray]:
+    def find_closest_spectrum(self, position: float) -> np.ndarray:
+        """
+        Find the closest spectra from the dataset to ``position``.
+
+        Parameters
+        ----------
+        position : float
+            The position to look up in the dataset.
+
+        Returns
+        -------
+        np.ndarray
+            The spectra at that position, if available.  Zeros otherwise.
+        """
         min_pos = np.min(self.positions)
         max_pos = np.max(self.positions)
         step = self.positions[1] - self.positions[0]
         if position < (min_pos - step) or position > (max_pos + step):
-            print('out of range', position, min_pos, max_pos)
             return np.zeros_like(self.intensities[0])
 
         idx = np.argmin(np.abs(self.positions - position))
@@ -75,6 +87,11 @@ class LaserDscanIOC(PVGroup):
         value=True,
         doc="Enable simulation mode",
     )
+    noise_level = pvproperty(
+        name="DScan:NoiseLevel",
+        value=1e-6,
+        doc="Simulation mode noise level for spectra",
+    )
 
     def __init__(self, *args, dataset: Optional[Dataset] = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,8 +109,9 @@ class LaserDscanIOC(PVGroup):
             return
 
         spectrum = self.dataset.find_closest_spectrum(
-            self.motor.user_readback_position
+            self.motor.user_readback_position,
         )
+        spectrum += np.random.rand(len(self.dataset.wavelengths)) * self.noise_level.value
         await write_if_differs(self.spectrometer.wavelengths, list(self.dataset.wavelengths))
         await write_if_differs(self.spectrometer.spectrum, list(spectrum))
 
