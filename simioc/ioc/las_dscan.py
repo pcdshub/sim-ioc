@@ -11,7 +11,7 @@ from caproto import ChannelData
 from caproto.server import AsyncLibraryLayer, PVGroup, SubGroup, pvproperty
 from simioc.db.utils import write_if_differs
 
-from ..db.motor import Motor
+from ..db.motor import EllLinear, Motor
 from ..db.qmini import QminiSpectrometer
 from .utils import SIM_IOC_PATH, main
 
@@ -82,6 +82,8 @@ class LaserDscanIOC(PVGroup):
 
     spectrometer = SubGroup(QminiSpectrometer, prefix="{spectrometer}")
     motor = SubGroup(Motor, prefix="{motor}", velocity=100.0, egu="mm")
+    upstream = SubGroup(EllLinear, prefix="{ell}", macros=dict(prefix="", channel=1, port=0), velocity=100.0, egu="mm")
+    downstream = SubGroup(EllLinear, prefix="{ell}", macros=dict(prefix="", channel=2, port=1), velocity=100.0, egu="mm")
     sim_enable = pvproperty(
         name="DScan:SimEnable",
         value=True,
@@ -123,5 +125,6 @@ if __name__ == "__main__":
         macros={
             "spectrometer": "DScan:Qmini",
             "motor": "DScan:m1",
+            "ell": "DScan:ELL",
         },
     )

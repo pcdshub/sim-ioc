@@ -440,3 +440,182 @@ class AttocubeMotor(PVGroup):
     @user_setpoint.putter
     async def user_setpoint(self, instance, value):
         await self.user_readback.write(value=value)
+
+
+class EllBase(PVGroup):
+    motor = pvproperty(value=0.0, name="{prefix}:M{channel}", record="motor", precision=3)
+    move = pvproperty(name="{prefix}:M{channel}:MOVE", value=0.0, doc="", record="ai", precision=3)
+    curpos = pvproperty(name="{prefix}:M{channel}:CURPOS", record="ai", value=0, doc="")
+    jog_fwd = pvproperty(
+        name="{prefix}:M{channel}:MOVE_FWD",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    jog_bwd = pvproperty(
+        name="{prefix}:M{channel}:MOVE_BWD",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    status = pvproperty(
+        name="{prefix}:M{channel}:STATUS",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=[
+            "OK",
+            "Comm Timeout",
+            "Mech Timeout",
+            "Cmd Error",
+            "Value Out of Range",
+            "Isolated",
+            "Out of Isolation",
+            "Init Error",
+            "Thermal Error",
+            "Busy",
+            "Sensor Error",
+            "Motor Error",
+            "Out of Range",
+            "Over Current",
+        ],
+        read_only=True,
+    )
+    optimize = pvproperty(
+        name="{prefix}:M{channel}:OPTIMIZE",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    from_addr = pvproperty(name="{prefix}:PORT{port}:FROM_ADDR", value=0, doc="")
+    to_addr = pvproperty(name="{prefix}:PORT{port}:TO_ADDR", value=0, doc="")
+    save = pvproperty(name="{prefix}:PORT{port}:SAVE", value=0, doc="")
+    command = pvproperty(name="{prefix}:PORT{port}:CMD", value=0, doc="")
+    response = pvproperty(
+        name="{prefix}:PORT{port}:RESPONSE", value=0, doc="", read_only=True
+    )
+
+    def __init__(
+        self,
+        *args,
+        position=0.0,
+        velocity=1.0,
+        precision=3,
+        acceleration=1.0,
+        resolution=1e-6,
+        user_limits=(0.0, 100.0),
+        tick_rate_hz=10.0,
+        egu="mm",
+        **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.tick_rate_hz = tick_rate_hz
+        self._request_count = 0
+        self.defaults = {
+            "position": position,
+            "velocity": velocity,
+            "precision": precision,
+            "acceleration": acceleration,
+            "resolution": resolution,
+            "user_limits": tuple(user_limits),
+            "egu": "mm",
+        }
+
+    @property
+    def fields(self) -> MotorFields:
+        """Fields of the motor record."""
+        return self.motor.field_inst
+
+    @property
+    def user_setpoint_position(self) -> float:
+        """User setpoint position."""
+        return self.motor.value
+
+    @property
+    def user_readback_position(self) -> float:
+        """User readback position of the motor."""
+        return self.fields.user_readback_value.value
+
+    @curpos.scan(period=0.1)
+    async def curpos(self, instance, async_lib):
+        await instance.write(
+            self.fields.user_readback_value.value
+        )
+
+    @move.putter
+    async def move(self, instance, value):
+        self._request_count += 1
+        if self._request_count % 3 == 0:
+            print(f"No, I won't move to {value} for reasons")
+            print(f"Current setpoint is: {self.user_setpoint_position}")
+        else:
+            print(f"OK, I'll move to {value}")
+            await self.motor.write(value)
+
+    @motor.startup
+    async def motor(self, instance, async_lib):
+        # Start the simulator:
+        await motor_record_simulator(
+            self.motor,
+            async_lib,
+            self.defaults,
+            tick_rate_hz=self.tick_rate_hz,
+        )
+
+
+class Ell6(EllBase, PVGroup):
+    name_0 = pvproperty(
+        name="{prefix}:M{channel}:NAME0", value="", doc="", max_length=40
+    )
+    name_1 = pvproperty(
+        name="{prefix}:M{channel}:NAME1", value="", doc="", max_length=40
+    )
+
+
+class Ell9(Ell6, PVGroup):
+    home = pvproperty(
+        name="{prefix}:M{channel}:HOME",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    name_2 = pvproperty(
+        name="{prefix}:M{channel}:NAME2", value="", doc="", max_length=40
+    )
+    name_3 = pvproperty(
+        name="{prefix}:M{channel}:NAME3", value="", doc="", max_length=40
+    )
+
+
+class EllLinear(EllBase, PVGroup):
+    home = pvproperty(
+        name="{prefix}:M{channel}:HOME",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    jog_step_setpoint = pvproperty(name="{prefix}:M{channel}:SET_JOG", value=0, doc="")
+    jog_step = pvproperty(name="{prefix}:M{channel}:GET_JOG", value=0, doc="")
+    clean = pvproperty(
+        name="{prefix}:M{channel}:CLEAN_MECH",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+    stop_optimize = pvproperty(
+        name="{prefix}:M{channel}:STOP",
+        value=0,
+        doc="",
+        dtype=caproto.ChannelType.ENUM,
+        enum_strings=["0", "1"],
+    )
+
+
+class EllRotation(EllLinear, PVGroup):
+    ...
