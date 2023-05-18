@@ -68,7 +68,7 @@ class Dataset:
         loaded = np.load(path, allow_pickle=False)
         return cls(
             positions=loaded["positions"] * 1e3,  # m -> mm
-            wavelengths=loaded["wavelengths"],
+            wavelengths=loaded["wavelengths"] * 1e9,  # m -> nm
             intensities=loaded["intensities"],
         )
 
@@ -103,6 +103,7 @@ class LaserDscanIOC(PVGroup):
         min_pos = np.min(dataset.positions)
         max_pos = np.max(dataset.positions)
         print(f"Dataset positions: {min_pos} to {max_pos}")
+        self._last_pos = None
         self.dataset = dataset
 
     @sim_enable.scan(period=0.2)
@@ -110,11 +111,15 @@ class LaserDscanIOC(PVGroup):
         if self.sim_enable.value not in (1, "On"):
             return
 
-        spectrum = self.dataset.find_closest_spectrum(
-            self.motor.user_readback_position,
-        )
+        pos = self.upstream.user_readback_position
+        # pos = self.motor.user_readback_position
+        if pos != self._last_pos:
+            print(f"Getting spectrum from sample data set at {pos:.4f} mm")
+            self._last_pos = pos
+
+        spectrum = self.dataset.find_closest_spectrum(pos)
         spectrum += np.random.rand(len(self.dataset.wavelengths)) * self.noise_level.value
-        await write_if_differs(self.spectrometer.wavelengths, list(self.dataset.wavelengths))
+        await write_if_differs(self.spectrometer.wavelengths, self.dataset.wavelengths)
         await write_if_differs(self.spectrometer.spectrum, list(spectrum))
 
 

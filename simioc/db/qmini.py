@@ -91,7 +91,8 @@ class QminiSpectrometer(PVGroup):
     wavelengths = pvproperty(
         name=":WAVELENGTHS",
         value=[0],
-        doc="",
+        doc="Wavelengths in nanometers",
+        units="nm",
         dtype=ChannelType.FLOAT,
         max_length=2500,
         read_only=True,
