@@ -7,7 +7,7 @@ from caproto.server import (AsyncLibraryLayer, PVGroup, SubGroup,
 from caproto.server.records import MotorFields, register_record
 from caproto.server.server import PvpropertyDouble
 
-from .utils import pvproperty_with_rbv
+from .utils import pvproperty_with_rbv, write_if_differs
 
 
 async def broadcast_precision_to_fields(record):
@@ -443,9 +443,22 @@ class AttocubeMotor(PVGroup):
 
 
 class EllBase(PVGroup):
+    async_lib: AsyncLibraryLayer
+
     motor = pvproperty(value=0.0, name="{prefix}:M{channel}", record="motor", precision=3)
-    move = pvproperty(name="{prefix}:M{channel}:MOVE", value=0.0, doc="", record="ai", precision=3)
-    curpos = pvproperty(name="{prefix}:M{channel}:CURPOS", record="ai", value=0, doc="")
+    move = pvproperty(
+        name="{prefix}:M{channel}:MOVE",
+        value=0.0,
+        doc="Setpoint value to move to",
+        record="ai",
+        precision=3,
+    )
+    curpos = pvproperty(
+        name="{prefix}:M{channel}:CURPOS",
+        record="ai",
+        value=0.0,
+        doc="Current position (i.e., motor RBV)",
+    )
     jog_fwd = pvproperty(
         name="{prefix}:M{channel}:MOVE_FWD",
         value=0,
@@ -541,23 +554,28 @@ class EllBase(PVGroup):
 
     @curpos.scan(period=0.1)
     async def curpos(self, instance, async_lib):
-        await instance.write(
-            self.fields.user_readback_value.value
-        )
+        await write_if_differs(instance, self.fields.user_readback_value.value)
 
     @move.putter
     async def move(self, instance, value):
         self._request_count += 1
-        if self._request_count % 3 == 0:
+        very_broken = True
+        should_move = (
+            (very_broken and self._request_count % 10 == 0)
+            or
+            (not very_broken and self._request_count % 2 == 0)
+        )
+        if should_move:
+            print(f"OK, I'll move to {value}")
+            await write_if_differs(self.motor, value)
+        else:
             print(f"No, I won't move to {value} for reasons")
             print(f"Current setpoint is: {self.user_setpoint_position}")
-        else:
-            print(f"OK, I'll move to {value}")
-            await self.motor.write(value)
 
     @motor.startup
     async def motor(self, instance, async_lib):
         # Start the simulator:
+        self.async_lib = async_lib
         await motor_record_simulator(
             self.motor,
             async_lib,
